@@ -6,7 +6,7 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
-import ru.yandex.intershop.model.Order;
+import ru.yandex.intershop.model.order.Order;
 import ru.yandex.intershop.service.OrderService;
 
 import java.util.List;

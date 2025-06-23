@@ -2,7 +2,7 @@ package ru.yandex.intershop.service;
 
 
 import org.springframework.stereotype.Service;
-import ru.yandex.intershop.model.Order;
+import ru.yandex.intershop.model.order.Order;
 import ru.yandex.intershop.repository.OrderRepository;
 
 import java.util.List;
