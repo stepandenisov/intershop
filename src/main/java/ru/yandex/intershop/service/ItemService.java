@@ -4,6 +4,9 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import ru.yandex.intershop.model.*;
+import ru.yandex.intershop.model.image.Image;
+import ru.yandex.intershop.model.item.Item;
+import ru.yandex.intershop.model.item.ItemDto;
 import ru.yandex.intershop.repository.ItemRepository;
 
 import java.util.List;

@@ -7,6 +7,9 @@ import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 import ru.yandex.intershop.model.*;
+import ru.yandex.intershop.model.image.Image;
+import ru.yandex.intershop.model.item.Item;
+import ru.yandex.intershop.model.item.ItemDto;
 import ru.yandex.intershop.service.ItemService;
 
 import java.io.IOException;
