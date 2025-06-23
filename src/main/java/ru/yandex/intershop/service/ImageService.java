@@ -2,7 +2,7 @@ package ru.yandex.intershop.service;
 
 
 import org.springframework.stereotype.Service;
-import ru.yandex.intershop.model.Image;
+import ru.yandex.intershop.model.image.Image;
 import ru.yandex.intershop.repository.ImageRepository;
 
 import java.util.Optional;
