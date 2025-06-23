@@ -1,4 +1,4 @@
-package ru.yandex.intershop.model;
+package ru.yandex.intershop.model.item;
 
 import jakarta.persistence.Entity;
 import jakarta.persistence.Id;
@@ -6,6 +6,7 @@ import jakarta.persistence.IdClass;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import ru.yandex.intershop.model.item.Item;
 
 @AllArgsConstructor
 @NoArgsConstructor

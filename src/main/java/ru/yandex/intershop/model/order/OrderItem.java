@@ -1,32 +1,34 @@
-package ru.yandex.intershop.model;
+package ru.yandex.intershop.model.order;
+
 
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
-import lombok.Setter;
+import ru.yandex.intershop.model.item.Item;
 
 @Entity
-@Table(name = "carts_items")
+@Table(name = "orders_items")
 @Getter
 @AllArgsConstructor
 @NoArgsConstructor
-public class CartItem {
+public class OrderItem {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     Long id;
 
-    @ManyToOne(cascade = CascadeType.MERGE)
-    @JoinColumn(name = "cart_id")
-    Cart cart;
+    @ManyToOne
+    @JoinColumn(name = "order_id")
+    Order order;
 
-    @ManyToOne(cascade = CascadeType.DETACH)
+    @ManyToOne
     @JoinColumn(name = "item_id")
     Item item;
 
-    @Setter
     @Column(name = "item_count")
     Integer itemCount;
 
+    @Column(name = "item_price")
+    Double itemPrice;
 }

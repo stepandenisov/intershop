@@ -1,4 +1,4 @@
-package ru.yandex.intershop.model;
+package ru.yandex.intershop.model.item;
 
 
 import jakarta.persistence.*;
