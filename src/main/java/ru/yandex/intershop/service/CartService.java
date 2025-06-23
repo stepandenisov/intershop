@@ -2,15 +2,13 @@ package ru.yandex.intershop.service;
 
 import org.springframework.stereotype.Service;
 import ru.yandex.intershop.model.Action;
-import ru.yandex.intershop.model.Cart;
-import ru.yandex.intershop.model.CartItem;
-import ru.yandex.intershop.model.Item;
+import ru.yandex.intershop.model.cart.Cart;
+import ru.yandex.intershop.model.cart.CartItem;
 import ru.yandex.intershop.repository.CartRepository;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
-import java.util.Optional;
 
 @Service
 public class CartService {

@@ -4,12 +4,13 @@ import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 import ru.yandex.intershop.model.*;
+import ru.yandex.intershop.model.cart.CartItem;
+import ru.yandex.intershop.model.order.Order;
+import ru.yandex.intershop.model.order.OrderItem;
 import ru.yandex.intershop.service.CartService;
-import ru.yandex.intershop.service.ItemService;
 import ru.yandex.intershop.service.OrderService;
 
 import java.util.List;
-import java.util.Optional;
 
 @Controller
 @RequestMapping("/cart/items")
