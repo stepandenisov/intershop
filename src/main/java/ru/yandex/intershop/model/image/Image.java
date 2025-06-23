@@ -6,6 +6,9 @@ import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+import ru.yandex.intershop.model.order.Order;
+
+import java.util.Objects;
 
 @Entity
 @Table(name="images")
@@ -26,4 +29,10 @@ public class Image {
     @Column(name = "image")
     private byte[] imageBytes;
 
+    @Override
+    public boolean equals(Object other){
+        if (other.getClass() != Image.class) return false;
+        Image image = (Image) other;
+        return Objects.equals(image.id, this.id);
+    }
 }

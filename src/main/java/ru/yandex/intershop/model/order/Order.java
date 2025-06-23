@@ -9,6 +9,7 @@ import lombok.Setter;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 
 @Entity
 @Table(name = "orders")
@@ -27,4 +28,11 @@ public class Order {
     @OneToMany(mappedBy = "order", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<OrderItem> orderItems = new ArrayList<>();
 
+
+    @Override
+    public boolean equals(Object other){
+        if (other.getClass() != Order.class) return false;
+        Order order = (Order) other;
+        return Objects.equals(order.id, this.id);
+    }
 }

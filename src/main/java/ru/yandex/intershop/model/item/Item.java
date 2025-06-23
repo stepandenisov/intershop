@@ -6,8 +6,10 @@ import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+import ru.yandex.intershop.model.order.Order;
 
 import java.io.Serializable;
+import java.util.Objects;
 
 @Entity
 @Table(name = "items")
@@ -25,4 +27,11 @@ public class Item implements Serializable {
     private String description;
 
     private Double price;
+
+    @Override
+    public boolean equals(Object other){
+        if (other.getClass() != Item.class) return false;
+        Item item = (Item) other;
+        return Objects.equals(item.id, this.id);
+    }
 }

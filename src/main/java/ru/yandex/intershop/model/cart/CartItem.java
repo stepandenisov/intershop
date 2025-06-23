@@ -6,6 +6,9 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 import ru.yandex.intershop.model.item.Item;
+import ru.yandex.intershop.model.order.OrderItem;
+
+import java.util.Objects;
 
 @Entity
 @Table(name = "carts_items")
@@ -29,5 +32,12 @@ public class CartItem {
     @Setter
     @Column(name = "item_count")
     Integer itemCount;
+
+    @Override
+    public boolean equals(Object other){
+        if (other.getClass() != CartItem.class) return false;
+        CartItem cartItem = (CartItem) other;
+        return Objects.equals(cartItem.id, this.id);
+    }
 
 }

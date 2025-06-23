@@ -6,9 +6,11 @@ import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+import ru.yandex.intershop.model.image.Image;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 
 @Entity
 @Table(name = "carts")
@@ -27,4 +29,11 @@ public class Cart {
     @OneToMany(mappedBy = "cart", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<CartItem> cartItems = new ArrayList<>();
 
+
+    @Override
+    public boolean equals(Object other){
+        if (other.getClass() != Cart.class) return false;
+        Cart cart = (Cart) other;
+        return Objects.equals(cart.id, this.id);
+    }
 }
