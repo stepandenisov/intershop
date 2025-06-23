@@ -7,10 +7,10 @@
 
 <body>
 <a href="/orders" style="float:right;">
-    <b>ЗАКАЗЫ &cudarrr;</b>
+    <b>ЗАКАЗЫ</b>
 </a>
 <a href="/items" style="float:right;">
-    <b>ГЛАВНАЯ &cudarrr;</b>
+    <b>ГЛАВНАЯ</b>
 </a>
 <table style="width:70%;margin-left:auto;margin-right:auto;">
     <tr th:each="cartItem : ${items}">
@@ -36,7 +36,7 @@
                             <button name="action" value="MINUS">-</button>
                             <span th:text="${cartItem.getItemCount()}"></span>
                             <button name="action" value="PLUS">+</button>
-                            <button name="action" value="DELETE" style="float:right;">&cross;</button>
+                            <button name="action" value="DELETE" style="float:right;">x</button>
                         </form>
                     </td>
                 </tr>
