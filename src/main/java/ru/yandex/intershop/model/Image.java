@@ -8,7 +8,7 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 @Entity
-@Table(name="items")
+@Table(name="images")
 @Getter
 @AllArgsConstructor
 @NoArgsConstructor
@@ -18,10 +18,9 @@ public class Image {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @OneToOne
-    @JoinColumn(name = "item_id", referencedColumnName = "id")
     @Setter
-    private Item item;
+    @Column(name = "item_id")
+    private Long itemId;
 
     @Lob
     @Column(name = "image")

@@ -1,23 +1,20 @@
 package ru.yandex.intershop.model;
 
-
-import jakarta.persistence.*;
+import jakarta.persistence.Entity;
+import jakarta.persistence.Id;
+import jakarta.persistence.IdClass;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
-import lombok.Setter;
 
-import java.io.Serializable;
-
-@Entity
-@Table(name = "items")
-@Getter
 @AllArgsConstructor
 @NoArgsConstructor
-public class Item implements Serializable {
+@Getter
+@Entity
+@IdClass(Item.class)
+public class ItemDto {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
     private String title;
@@ -25,4 +22,6 @@ public class Item implements Serializable {
     private String description;
 
     private Double price;
+
+    private Integer count = 0;
 }
