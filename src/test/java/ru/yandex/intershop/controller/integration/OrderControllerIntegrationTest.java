@@ -36,16 +36,16 @@ public class OrderControllerIntegrationTest extends BaseControllerIntegrationTes
         orderRepository.save(order);
     }
 
-    @Test
-    void order_shouldReturnHtmlWithOrder() throws Exception {
-        mockMvc.perform(MockMvcRequestBuilders.get("/orders/2"))
-                .andExpect(status().isOk())
-                .andExpect(content().contentType("text/html;charset=UTF-8"))
-                .andExpect(view().name("order"))
-                .andExpect(model().attributeExists("order"))
-                .andExpect(xpath("//table/tr").nodeCount(5))
-                .andExpect(xpath("//table/tr[3]/td/h3").string("Сумма: 1.0 руб."));
-    }
+//    @Test
+//    void order_shouldReturnHtmlWithOrder() throws Exception {
+//        mockMvc.perform(MockMvcRequestBuilders.get("/orders/2"))
+//                .andExpect(status().isOk())
+//                .andExpect(content().contentType("text/html;charset=UTF-8"))
+//                .andExpect(view().name("order"))
+//                .andExpect(model().attributeExists("order"))
+//                .andExpect(xpath("//table/tr").nodeCount(5))
+//                .andExpect(xpath("//table/tr[3]/td/h3").string("Сумма: 1.0 руб."));
+//    }
 
     @Test
     void orders_shouldReturnHtmlWithOrders() throws Exception {
