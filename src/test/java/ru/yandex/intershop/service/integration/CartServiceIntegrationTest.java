@@ -38,7 +38,7 @@ public class CartServiceIntegrationTest extends BaseServiceIntegrationTest{
         assertEquals(1, items.size(), "Корзина должна быть с одним товаром");
         assertEquals(1, items.get(0).getItemCount(), "Количество должно быть равно 1");
         assertNotNull(items.get(0).getItem(), "Товар не должен быть null");
-        assertEquals(10L, items.get(0).getItem().getId(), "id товара должен быть 1");
+        assertEquals(1L, items.get(0).getItem().getId(), "id товара должен быть 1");
     }
 
     @Test
