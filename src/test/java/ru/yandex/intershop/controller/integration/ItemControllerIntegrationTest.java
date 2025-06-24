@@ -47,13 +47,13 @@ public class ItemControllerIntegrationTest extends BaseControllerIntegrationTest
                         .part(descriptionPart)
                         .part(pricePart))
                 .andExpect(status().is3xxRedirection())
-                .andExpect(redirectedUrl("/items/3"));
+                .andExpect(redirectedUrl("/items/6"));
     }
 
 
     @Test
     void item_shouldReturnHtmlWithItem() throws Exception {
-        mockMvc.perform(MockMvcRequestBuilders.get("/items/5"))
+        mockMvc.perform(MockMvcRequestBuilders.get("/items/8"))
                 .andExpect(status().isOk())
                 .andExpect(content().contentType("text/html;charset=UTF-8"))
                 .andExpect(view().name("item"))
