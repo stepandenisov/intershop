@@ -26,7 +26,7 @@ public class Cart {
     private Double total;
 
     @Setter
-    @OneToMany(mappedBy = "cart", cascade = CascadeType.ALL, orphanRemoval = true)
+    @OneToMany(mappedBy = "cart", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.EAGER)
     private List<CartItem> cartItems = new ArrayList<>();
 
 
