@@ -49,19 +49,6 @@ public class ItemControllerIntegrationTest extends BaseControllerIntegrationTest
                 .andExpect(status().is3xxRedirection());
     }
 
-
-//    @Test
-//    void item_shouldReturnHtmlWithItem() throws Exception {
-//        mockMvc.perform(MockMvcRequestBuilders.get("/items/4"))
-//                .andExpect(status().isOk())
-//                .andExpect(content().contentType("text/html;charset=UTF-8"))
-//                .andExpect(view().name("item"))
-//                .andExpect(model().attributeExists("item"))
-//                .andExpect(xpath("//div").nodeCount(1))
-//                .andExpect(xpath("//div/p").nodeCount(3))
-//                .andExpect(xpath("//div/p[2]/b[1]").string("title"));
-//    }
-
     @Test
     void items_shouldReturnHtmlWithItems() throws Exception {
         mockMvc.perform(MockMvcRequestBuilders.get("/items"))
