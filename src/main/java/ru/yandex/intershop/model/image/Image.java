@@ -1,16 +1,17 @@
 package ru.yandex.intershop.model.image;
 
 
-import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+import org.springframework.data.annotation.Id;
+import org.springframework.data.relational.core.mapping.Column;
+import org.springframework.data.relational.core.mapping.Table;
 import ru.yandex.intershop.model.order.Order;
 
 import java.util.Objects;
 
-@Entity
 @Table(name="images")
 @Getter
 @AllArgsConstructor
@@ -18,16 +19,14 @@ import java.util.Objects;
 public class Image {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
     @Setter
-    @Column(name = "item_id")
+    @Column("item_id")
     private Long itemId;
 
-    @Lob
-    @Column(name = "image")
-    private byte[] imageBytes;
+    @Column("image")
+    private Byte[] imageBytes;
 
     @Override
     public boolean equals(Object other){

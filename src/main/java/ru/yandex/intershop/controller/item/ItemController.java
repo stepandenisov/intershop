@@ -6,6 +6,8 @@ import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
+import reactor.core.publisher.Flux;
+import reactor.core.publisher.Mono;
 import ru.yandex.intershop.model.*;
 import ru.yandex.intershop.model.image.Image;
 import ru.yandex.intershop.model.item.Item;
@@ -14,6 +16,7 @@ import ru.yandex.intershop.service.ItemService;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
 
@@ -28,51 +31,48 @@ public class ItemController {
     }
 
     @GetMapping("/add")
-    public String addItemPage() {
-        return "add-item";
+    public Mono<String> addItemPage() {
+        return Mono.just("add-item");
     }
 
     @PostMapping(value = {"/", ""}, consumes = {MediaType.MULTIPART_FORM_DATA_VALUE, MediaType.APPLICATION_OCTET_STREAM_VALUE})
-    public String post(@RequestParam(name = "title") String title,
+    public Mono<String> post(@RequestParam(name = "title") String title,
                        @RequestParam(name = "description") String description,
                        @RequestParam(name = "price") Double price,
                        @RequestPart(name = "image") MultipartFile imageBytes) throws IOException {
         Item item = new Item(null, title, description, price);
-        Image image = new Image(null, null, imageBytes.getBytes());
-        Item savedItem = itemService.saveItemWithImage(item, image);
-        return "redirect:/items/" + savedItem.getId();
+        byte[] rawBytes = imageBytes.getBytes();
+        Byte[] byteArray = new Byte[rawBytes.length];
+        Arrays.setAll(byteArray, n -> rawBytes[n]);
+        Image image = new Image(null, null, byteArray);
+        System.out.println("HERE 3");
+        return itemService.saveItemWithImage(item, image)
+                .flatMap(savedItemId -> Mono.just("redirect:/items/" + savedItemId));
     }
 
     @GetMapping("/{id}")
-    public String item(@PathVariable Long id, Model model) {
-        Optional<ItemDto> item = itemService.findItemByIdDto(id);
-        if (item.isEmpty()) {
-            return "redirect:/items";
-        }
-        model.addAttribute("item", item.get());
-        return "item";
+    public Mono<String> item(@PathVariable Long id, Model model) {
+        return itemService.findItemByIdDto(id)
+                .flatMap(item -> {
+                    model.addAttribute("item", item);
+                    return Mono.just("item");
+                })
+                .switchIfEmpty(Mono.defer(() -> Mono.just("redirect:/items")));
     }
 
     @GetMapping(value = {"/", ""})
-    public String items(@RequestParam(name = "search", required = false, defaultValue = "") String search,
-                        @RequestParam(name = "sort", required = false, defaultValue = "NO") Sorting sort,
-                        @RequestParam(name = "pageSize", required = false, defaultValue = "10") Integer pageSize,
-                        @RequestParam(name = "pageNumber", required = false, defaultValue = "1") Integer pageNumber,
-                        Model model) {
+    public Mono<String> items(@RequestParam(name = "search", required = false, defaultValue = "") String search,
+                              @RequestParam(name = "sort", required = false, defaultValue = "NO") Sorting sort,
+                              @RequestParam(name = "pageSize", required = false, defaultValue = "10") Integer pageSize,
+                              @RequestParam(name = "pageNumber", required = false, defaultValue = "1") Integer pageNumber,
+                              Model model) {
         Paging paging = new Paging(pageNumber, pageSize, false, false);
-        List<ItemDto> items = itemService.searchPaginatedAndSorted(search, paging, sort);
+        Flux<ItemDto> items = itemService.searchPaginatedAndSorted(search, paging, sort);
 
-        int N = 4;
-        List<List<ItemDto>> reshapedItems = new ArrayList<>();
-        for (int i = 0; i < items.size(); i += N) {
-            int toIndex = Math.min(i + N, items.size());
-            reshapedItems.add(items.subList(i, toIndex));
-        }
-
-        model.addAttribute("items", reshapedItems);
+        model.addAttribute("items", items);
         model.addAttribute("search", search);
         model.addAttribute("sort", sort.name());
         model.addAttribute("paging", paging);
-        return "items";
+        return Mono.just("items");
     }
 }

@@ -3,6 +3,8 @@ package ru.yandex.intershop.service;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
+import reactor.core.publisher.Flux;
+import reactor.core.publisher.Mono;
 import ru.yandex.intershop.model.*;
 import ru.yandex.intershop.model.image.Image;
 import ru.yandex.intershop.model.item.Item;
@@ -10,6 +12,7 @@ import ru.yandex.intershop.model.item.ItemDto;
 import ru.yandex.intershop.repository.ItemRepository;
 
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 
 @Service
@@ -18,56 +21,58 @@ public class ItemService {
     private final ItemRepository itemRepository;
     private final ImageService imageService;
 
-    public ItemService (ItemRepository itemRepository, ImageService imageService){
+    public ItemService(ItemRepository itemRepository, ImageService imageService) {
         this.itemRepository = itemRepository;
         this.imageService = imageService;
     }
 
-    public Optional<ItemDto> findItemByIdDto(Long id){
+    public Mono<ItemDto> findItemByIdDto(Long id) {
         return itemRepository.findByIdDto(id);
     }
 
-    public Optional<Item> findItemById(Long id){
+    public Mono<Item> findItemById(Long id) {
         return itemRepository.findById(id);
     }
 
-    public Item saveItemWithImage(Item item, Image image){
-        Item savedItem = itemRepository.save(item);
-        image.setItemId(savedItem.getId());
-        imageService.save(image);
-        return savedItem;
+    public Mono<Long> saveItemWithImage(Item item, Image image) {
+        return itemRepository.save(item)
+                .flatMap(savedItem -> {
+                    System.out.println("HERE");
+                    image.setItemId(savedItem.getId());
+                    return imageService.save(image)
+                            .flatMap(savedImage -> Mono.just(savedImage.getItemId()));
+                });
     }
 
-    public List<ItemDto> searchPaginatedAndSorted(String search, Paging paging, Sorting sort) {
-        List<ItemDto> items = search.isBlank() ? findAllPaginated(paging, sort) : searchAllPaginated(search, paging, sort);
-
-        long count = search.isBlank()
+    public Flux<ItemDto> searchPaginatedAndSorted(String search, Paging paging, Sorting sort) {
+        Flux<ItemDto> items = search.isBlank() ? findAllPaginated(paging, sort) : searchAllPaginated(search, paging, sort);
+        Mono<Long> count = search.isBlank()
                 ? itemRepository.count()
                 : itemRepository.countAllByTitleStartingWithOrDescriptionStartingWith(search, search);
 
-        long totalPageCount = ((count - 1) / paging.getPageSize()) + 1;
-
-        if (paging.getPageNumber() == 1) {
-            paging.setHasPrevious(false);
-        } else {
-            paging.setHasPrevious(totalPageCount != 1);
-        }
-        paging.setHasNext(totalPageCount > paging.getPageNumber());
-        return items;
+        return count.flatMapMany(cnt -> {
+            long totalPageCount = (cnt - 1) / paging.getPageSize() + 1;
+            if (paging.getPageNumber() == 1) {
+                paging.setHasPrevious(false);
+            } else {
+                paging.setHasPrevious(!Objects.equals(totalPageCount, 1L));
+            }
+            paging.setHasNext(totalPageCount > paging.getPageNumber());
+            return items;
+        });
     }
 
-    private List<ItemDto> searchAllPaginated(String search, Paging paging, Sorting sorting) {
+    private Flux<ItemDto> searchAllPaginated(String search, Paging paging, Sorting sorting) {
         return itemRepository.findAllByTitleStartsWithOrDescriptionStartsWithDto(search,
                 PageRequest.of(paging.getPageNumber() - 1,
                         paging.getPageSize(),
                         Sort.by(sorting.field)));
     }
 
-    private List<ItemDto> findAllPaginated(Paging paging, Sorting sorting) {
+    private Flux<ItemDto> findAllPaginated(Paging paging, Sorting sorting) {
         return itemRepository.findAllDto(PageRequest.of(paging.getPageNumber() - 1,
-                        paging.getPageSize(),
-                        Sort.by(sorting.field)))
-                .stream().toList();
+                paging.getPageSize(),
+                Sort.by(sorting.field)));
     }
 
 }

@@ -1,17 +1,17 @@
 package ru.yandex.intershop.model.item;
 
 
-import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+import org.springframework.data.annotation.Id;
+import org.springframework.data.relational.core.mapping.Table;
 import ru.yandex.intershop.model.order.Order;
 
 import java.io.Serializable;
 import java.util.Objects;
 
-@Entity
 @Table(name = "items")
 @Getter
 @AllArgsConstructor
@@ -19,7 +19,6 @@ import java.util.Objects;
 public class Item implements Serializable {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
     private String title;

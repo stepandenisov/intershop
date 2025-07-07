@@ -3,8 +3,12 @@ package ru.yandex.intershop.controller.image;
 
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.*;
+import reactor.core.publisher.Flux;
+import reactor.core.publisher.Mono;
 import ru.yandex.intershop.model.image.Image;
 import ru.yandex.intershop.service.ImageService;
+
+import java.util.Arrays;
 
 @Controller
 @RequestMapping("/images")
@@ -18,10 +22,10 @@ public class ImageController {
 
     @GetMapping("/{itemId}")
     @ResponseBody
-    public byte[] getImageByPostId(@PathVariable Long itemId){
+    public Flux<Byte> getImageByPostId(@PathVariable Long itemId){
         return imageService.getImageByItemId(itemId)
-                .map(Image::getImageBytes)
-                .orElse(null);
+                .flatMapMany(image -> Flux.fromIterable(Arrays.asList(image.getImageBytes())))
+                .switchIfEmpty(Flux.defer(Flux::empty));
     }
 
 }

@@ -3,14 +3,11 @@ package ru.yandex.intershop.controller.cart;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
+import reactor.core.publisher.Mono;
 import ru.yandex.intershop.model.*;
-import ru.yandex.intershop.model.cart.CartItem;
-import ru.yandex.intershop.model.order.Order;
-import ru.yandex.intershop.model.order.OrderItem;
+
 import ru.yandex.intershop.service.CartService;
 import ru.yandex.intershop.service.OrderService;
-
-import java.util.List;
 
 @Controller
 @RequestMapping("/cart/items")
@@ -25,40 +22,29 @@ public class CartController {
     }
 
     @PostMapping("/{id}")
-    public String modifyItemCount(@PathVariable Long id,
+    public Mono<String> modifyItemCount(@PathVariable Long id,
                                   @RequestParam Action action,
                                   @RequestParam String redirectUrl) {
-        cartService.modifyItemCountByItemId(id, action);
-        return "redirect:" + redirectUrl;
+        return cartService.modifyItemCountByItemId(id, action)
+                .then(Mono.just("redirect:" + redirectUrl));
     }
 
     @PostMapping("/buy")
-    public String buy() {
-        List<CartItem> cartItems = cartService.getItemsFromCart();
-        Double total = cartItems.stream()
-                .map(cartItem -> cartItem.getItemCount() * cartItem.getItem().getPrice())
-                .reduce(Double::sum)
-                .orElse(0.0);
-        Order order = new Order(null, total, null);
-        List<OrderItem> orderItems = cartItems.stream()
-                .map(cartItem -> new OrderItem(null, order, cartItem.getItem(), cartItem.getItemCount(), cartItem.getItem().getPrice()))
-                .toList();
-        order.setOrderItems(orderItems);
-        Order newOrder = orderService.save(order);
-        return "redirect:/orders/" + newOrder.getId() + "?newOrder=true";
+    public Mono<String> buy() {
+        return cartService.findCartWithCartItemsById(1L)
+                .flatMap(orderService::createOrderByCart)
+                .flatMap(order -> Mono.just("redirect:/orders/" + order.getId() + "?newOrder=true"));
     }
 
     @GetMapping
-    public String cart(Model model) {
-        List<CartItem> cartItems = cartService.getItemsFromCart();
-        Double total = cartItems.stream()
-                .map(cartItem -> cartItem.getItemCount() * cartItem.getItem().getPrice())
-                .reduce(Double::sum)
-                .orElse(0.0);
-        model.addAttribute("items", cartItems);
-        model.addAttribute("total", total);
-        model.addAttribute("empty", cartItems.isEmpty());
-        return "cart";
+    public Mono<String> cart(Model model) {
+        return cartService.findCartWithCartItemsById(1L)
+                .flatMap(cart -> {
+                    model.addAttribute("items", cart.getCartItems());
+                    model.addAttribute("total", cart.getTotal());
+                    model.addAttribute("empty", cart.getCartItems().isEmpty());
+                    return Mono.just("cart");
+                });
     }
 
 }

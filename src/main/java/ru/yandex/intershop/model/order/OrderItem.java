@@ -1,13 +1,14 @@
 package ru.yandex.intershop.model.order;
 
 
-import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import org.springframework.data.annotation.Id;
+import org.springframework.data.relational.core.mapping.Column;
+import org.springframework.data.relational.core.mapping.Table;
 import ru.yandex.intershop.model.item.Item;
 
-@Entity
 @Table(name = "orders_items")
 @Getter
 @AllArgsConstructor
@@ -15,20 +16,15 @@ import ru.yandex.intershop.model.item.Item;
 public class OrderItem {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
     Long id;
 
-    @ManyToOne
-    @JoinColumn(name = "order_id")
-    Order order;
+    @Column("order_id")
+    Long orderId;
 
-    @ManyToOne
-    @JoinColumn(name = "item_id")
-    Item item;
+    @Column("item_id")
+    Long itemId;
 
-    @Column(name = "item_count")
+    @Column("item_count")
     Integer itemCount;
 
-    @Column(name = "item_price")
-    Double itemPrice;
 }

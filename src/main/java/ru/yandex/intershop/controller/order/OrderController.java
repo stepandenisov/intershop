@@ -6,11 +6,10 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
+import reactor.core.publisher.Flux;
+import reactor.core.publisher.Mono;
 import ru.yandex.intershop.model.order.Order;
 import ru.yandex.intershop.service.OrderService;
-
-import java.util.List;
-import java.util.Optional;
 
 @RequestMapping("/orders")
 @Controller
@@ -18,29 +17,27 @@ public class OrderController {
 
     private final OrderService orderService;
 
-    public OrderController(OrderService orderService){
+    public OrderController(OrderService orderService) {
         this.orderService = orderService;
     }
 
     @GetMapping("/{id}")
-    public String order(@PathVariable Long id,
-                        @RequestParam(required = false, defaultValue = "false") boolean newOrder,
-                        Model model)
-    {
-        Optional<Order> order = orderService.findOrderById(id);
-        if (order.isEmpty()){
-            return "redirect:/orders";
-        }
-        model.addAttribute("order", order.get());
-        model.addAttribute("newOrder", newOrder);
-        return "order";
+    public Mono<String> order(@PathVariable Long id,
+                              @RequestParam(required = false, defaultValue = "false") boolean newOrder,
+                              Model model) {
+        return orderService.findOrderById(id)
+                .flatMap(order -> {
+                    model.addAttribute("order", order);
+                    model.addAttribute("newOrder", newOrder);
+                    return Mono.just("order");
+                })
+                .switchIfEmpty(Mono.defer(() -> Mono.just("redirect:/orders")));
     }
 
     @GetMapping()
-    public String orders(Model model)
-    {
-        List<Order> orders = orderService.findAll();
+    public Mono<String> orders(Model model) {
+        Flux<Order> orders = orderService.findAll();
         model.addAttribute("orders", orders);
-        return "orders";
+        return Mono.just("orders");
     }
 }

@@ -2,6 +2,7 @@ package ru.yandex.intershop.service;
 
 
 import org.springframework.stereotype.Service;
+import reactor.core.publisher.Mono;
 import ru.yandex.intershop.model.image.Image;
 import ru.yandex.intershop.repository.ImageRepository;
 
@@ -16,11 +17,12 @@ public class ImageService {
         this.imageRepository = imageRepository;
     }
 
-    public Optional<Image> getImageByItemId(Long itemId){
+    public Mono<Image> getImageByItemId(Long itemId){
         return imageRepository.findImageByItemId(itemId);
     }
 
-    public void save(Image image){
-        imageRepository.save(image);
+    public Mono<Image> save(Image image){
+        System.out.println("HERE 2");
+        return imageRepository.save(image);
     }
 }

@@ -1,37 +1,44 @@
 package ru.yandex.intershop.repository;
 
-import jakarta.transaction.Transactional;
-import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
-import org.springframework.data.jpa.repository.JpaRepository;
-import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.r2dbc.repository.Query;
 import org.springframework.data.repository.query.Param;
+import org.springframework.data.repository.reactive.ReactiveCrudRepository;
 import org.springframework.stereotype.Repository;
+import reactor.core.publisher.Flux;
+import reactor.core.publisher.Mono;
 import ru.yandex.intershop.model.item.Item;
 import ru.yandex.intershop.model.item.ItemDto;
 
-import java.util.List;
-import java.util.Optional;
 
 @Repository
-public interface ItemRepository extends JpaRepository<Item, Long> {
+public interface ItemRepository extends ReactiveCrudRepository<Item, Long> {
 
-    @Query(value = "SELECT new ItemDto(item.id, item.title, item.description, item.price, cartItem.itemCount) "
-            + " from Item item left join CartItem cartItem on cartItem.item.id = item.id left join Cart cart on cartItem.cart.id = cart.id"
-            + " where item.id=:itemId")
-    Optional<ItemDto> findByIdDto(@Param("itemId") Long itemId);
+    @Query(value = """
+            SELECT items.id, items.title, items.description, items.price, carts_items.item_count as count
+            from items
+            left join carts_items on carts_items.item_id = items.id
+            where items.id=:itemId
+            """)
+    Mono<ItemDto> findByIdDto(@Param("itemId") Long itemId);
 
-    @Query(value = "SELECT new ItemDto(item.id, item.title, item.description, item.price, cartItem.itemCount) "
-            + " from Item item left join CartItem cartItem on cartItem.item.id = item.id left join Cart cart on cartItem.cart.id = cart.id"
-            + " where (item.title like :search or item.description like :search)")
-    List<ItemDto> findAllByTitleStartsWithOrDescriptionStartsWithDto(@Param("search") String search,
+    @Query(value = """
+            SELECT items.id, items.title, items.description, items.price, carts_items.item_count as count
+            from items
+            left join carts_items on carts_items.item_id = items.id
+            where (items.title like :search or items.description like :search)
+            """)
+    Flux<ItemDto> findAllByTitleStartsWithOrDescriptionStartsWithDto(@Param("search") String search,
                                                                      Pageable page);
 
-    Long countAllByTitleStartingWithOrDescriptionStartingWith(String title,
+    Mono<Long> countAllByTitleStartingWithOrDescriptionStartingWith(String title,
                                                               String description);
 
-    @Query(value = "SELECT new ItemDto(item.id, item.title, item.description, item.price, cartItem.itemCount) "
-            + " from Item item left join CartItem cartItem on cartItem.item.id = item.id left join Cart cart on cartItem.cart.id = cart.id ")
-    Page<ItemDto> findAllDto(Pageable page);
+    @Query(value = """
+            SELECT items.id, items.title, items.description, items.price, carts_items.item_count
+            from items
+            left join carts_items on carts_items.item_id = items.id
+            """)
+    Flux<ItemDto> findAllDto(Pageable page);
 
 }

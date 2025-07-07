@@ -1,16 +1,17 @@
 package ru.yandex.intershop.model.cart;
 
-import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+import org.springframework.data.annotation.Id;
+import org.springframework.data.relational.core.mapping.Column;
+import org.springframework.data.relational.core.mapping.Table;
 import ru.yandex.intershop.model.item.Item;
 import ru.yandex.intershop.model.order.OrderItem;
 
 import java.util.Objects;
 
-@Entity
 @Table(name = "carts_items")
 @Getter
 @AllArgsConstructor
@@ -18,19 +19,16 @@ import java.util.Objects;
 public class CartItem {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
     Long id;
 
-    @ManyToOne(cascade = CascadeType.MERGE)
-    @JoinColumn(name = "cart_id")
-    Cart cart;
+    @Column("cart_id")
+    Long cartId;
 
-    @ManyToOne(cascade = CascadeType.DETACH)
-    @JoinColumn(name = "item_id")
-    Item item;
+    @Column("item_id")
+    Long itemId;
 
     @Setter
-    @Column(name = "item_count")
+    @Column("item_count")
     Integer itemCount;
 
     @Override

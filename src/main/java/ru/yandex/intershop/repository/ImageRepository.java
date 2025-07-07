@@ -1,15 +1,14 @@
 package ru.yandex.intershop.repository;
 
 
-import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.repository.reactive.ReactiveCrudRepository;
 import org.springframework.stereotype.Repository;
+import reactor.core.publisher.Mono;
 import ru.yandex.intershop.model.image.Image;
 
-import java.util.Optional;
-
 @Repository
-public interface ImageRepository extends JpaRepository<Image, Long> {
+public interface ImageRepository extends ReactiveCrudRepository<Image, Long> {
 
-    Optional<Image> findImageByItemId(Long itemId);
+    Mono<Image> findImageByItemId(Long itemId);
 
 }
