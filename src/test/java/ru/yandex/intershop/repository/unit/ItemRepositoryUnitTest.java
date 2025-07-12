@@ -1,38 +1,25 @@
 package ru.yandex.intershop.repository.unit;
 
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
-import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Sort;
 import ru.yandex.intershop.model.item.Item;
 import ru.yandex.intershop.model.item.ItemDto;
-import ru.yandex.intershop.repository.ItemRepository;
 
 import java.util.List;
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-@DataJpaTest
-public class ItemRepositoryUnitTest {
-
-    @Autowired
-    private ItemRepository itemRepository;
-
-    @BeforeEach
-    public void setUp() {
-        itemRepository.deleteAll();
-    }
+public class ItemRepositoryUnitTest extends BaseRepositoryUnitTest{
 
     @Test
     void findByIdDto_shouldReturnItemDto(){
         Item item = new Item(null, "title", "description", 12.0);
-        Item savedItem = itemRepository.save(item);
+        Item savedItem = itemRepository.save(item).block();
 
-        Optional<ItemDto> actualItemDto = itemRepository.findByIdDto(savedItem.getId());
+        assertNotNull(savedItem);
+
+        Optional<ItemDto> actualItemDto = itemRepository.findByIdDto(savedItem.getId()).blockOptional();
 
         assertTrue(actualItemDto.isPresent(), "Изображение должно быть");
         assertEquals("description", actualItemDto.get().getDescription(), "Описание должно быть description");
@@ -42,10 +29,11 @@ public class ItemRepositoryUnitTest {
     @Test
     void findAllByTitleStartsWithOrDescriptionStartsWithDto_shouldReturnItemsDto(){
         Item item = new Item(null, "title", "description", 12.0);
-        itemRepository.save(item);
+        itemRepository.save(item).block();
 
-        List<ItemDto> items = itemRepository.findAllByTitleStartsWithOrDescriptionStartsWithDto("title",
-                PageRequest.of(0, 10));
+        List<ItemDto> items = itemRepository.findAllByTitleStartsWithOrDescriptionStartsWithDtoSortByOffsetLimit(
+                PageRequest.of(0, 10), "title").collectList().block();
+        assertNotNull(items);
 
         assertEquals(1, items.size(), "Количество товаров должно быть равно 1");
         assertEquals("description", items.get(0).getDescription(), "Описание должно быть description");
@@ -54,9 +42,9 @@ public class ItemRepositoryUnitTest {
     @Test
     void countAllByTitleStartingWithOrDescriptionStartingWith_shouldReturnCount(){
         Item item = new Item(null, "title", "description", 12.0);
-        itemRepository.save(item);
+        itemRepository.save(item).block();
 
-        Long countItems = itemRepository.countAllByTitleStartingWithOrDescriptionStartingWith("title", "title");
+        Long countItems = itemRepository.countAllByTitleStartingWithOrDescriptionStartingWith("title", "title").block();
 
         assertEquals(1L, countItems, "Количество товаров должно быть равно 1");
     }
@@ -64,12 +52,13 @@ public class ItemRepositoryUnitTest {
     @Test
     void findAllDto_shouldReturnItems(){
         Item item = new Item(null, "title", "description", 12.0);
-        itemRepository.save(item);
+        itemRepository.save(item).block();
 
-        Page<ItemDto> items = itemRepository.findAllDto(PageRequest.of(0, 10));
+        List<ItemDto> items = itemRepository.findAllDtoSortByOffsetLimit(PageRequest.of(0, 10)).collectList().block();
 
-        assertEquals(1, items.getContent().size(), "Количество товаров должно быть равно 1");
-        assertEquals("description", items.getContent().get(0).getDescription(), "Описание должно быть description");
+        assertNotNull(items);
+        assertEquals(1, items.size(), "Количество товаров должно быть равно 1");
+        assertEquals("description", items.get(0).getDescription(), "Описание должно быть description");
     }
 
 }

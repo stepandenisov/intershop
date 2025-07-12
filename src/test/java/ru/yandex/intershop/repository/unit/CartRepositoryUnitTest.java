@@ -1,34 +1,21 @@
 package ru.yandex.intershop.repository.unit;
 
 
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
 import ru.yandex.intershop.model.cart.Cart;
-import ru.yandex.intershop.repository.CartRepository;
 
 import java.util.Optional;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.*;
 
-@DataJpaTest
-public class CartRepositoryUnitTest {
-
-    @Autowired
-    private CartRepository cartRepository;
-
-    @BeforeEach
-    public void setUp() {
-        cartRepository.deleteAll();
-    }
+public class CartRepositoryUnitTest extends BaseRepositoryUnitTest{
 
     @Test
     void findById_shouldReturnCart(){
-        Cart cart = new Cart(null, 1.0, null);
-        Long cartId = cartRepository.save(cart).getId();
-        Optional<Cart> actualCart = cartRepository.findById(cartId);
+        Cart cart = cartRepository.save(new Cart(null, 1.0, null)).block();
+        assertNotNull(cart);
+        Long cartId = cart.getId();
+        Optional<Cart> actualCart = cartRepository.findById(cartId).blockOptional();
 
         assertTrue(actualCart.isPresent(), "Заказ должен быть");
         assertEquals(1.0, actualCart.get().getTotal(), "Общая сумма должна быть 1.0");

@@ -1,36 +1,26 @@
 package ru.yandex.intershop.repository.unit;
 
 
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
 import ru.yandex.intershop.model.image.Image;
-import ru.yandex.intershop.repository.ImageRepository;
+import ru.yandex.intershop.model.item.Item;
 
 import java.util.Optional;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.*;
 
-@DataJpaTest
-public class ImageRepositoryUnitTest {
-    @Autowired
-    private ImageRepository imageRepository;
+public class ImageRepositoryUnitTest extends BaseRepositoryUnitTest{
 
-    @BeforeEach
-    public void setUp() {
-        imageRepository.deleteAll();
-    }
 
     @Test
     void findById_shouldReturnCart(){
-        Image image = new Image(null, 1L, new byte[]{1});
-        imageRepository.save(image);
-        Optional<Image> actualImage = imageRepository.findImageByItemId(1L);
+        Item item = itemRepository.save(new Item(null, "Test", "Description", 1.0)).block();
+        assertNotNull(item);
+        imageRepository.save(new Image(null, item.getId(), new byte[]{1})).block();
+        Optional<Image> actualImage = imageRepository.findImageByItemId(item.getId()).blockOptional();
 
         assertTrue(actualImage.isPresent(), "Изображение должно быть");
-        assertEquals(1L, actualImage.get().getItemId(), "id товара должен быть 1");
+        assertEquals(item.getId(), actualImage.get().getItemId(), "id товара должен быть " + item.getId());
     }
 
 }
