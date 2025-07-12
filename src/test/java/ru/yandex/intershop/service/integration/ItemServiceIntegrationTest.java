@@ -2,6 +2,7 @@ package ru.yandex.intershop.service.integration;
 
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
 import ru.yandex.intershop.model.Paging;
 import ru.yandex.intershop.model.Sorting;
 import ru.yandex.intershop.model.image.Image;
@@ -26,9 +27,11 @@ public class ItemServiceIntegrationTest extends BaseServiceIntegrationTest{
     @Test
     void findItemByIdDto_shouldReturnItemDto(){
         Item item = new Item(null, "title", "description", 12.0);
-        Item savedItem = itemRepository.save(item);
+        Item savedItem = itemRepository.save(item).block();
 
-        Optional<ItemDto> actualItemDto = itemService.findItemByIdDto(savedItem.getId());
+        assertNotNull(savedItem);
+
+        Optional<ItemDto> actualItemDto = itemService.findItemByIdDto(savedItem.getId()).blockOptional();
 
         assertTrue(actualItemDto.isPresent(), "Изображение должно быть");
         assertEquals("description", actualItemDto.get().getDescription(), "Описание должно быть description");
@@ -39,23 +42,24 @@ public class ItemServiceIntegrationTest extends BaseServiceIntegrationTest{
     @Test
     void findItemById_shouldReturnItem(){
         Item item = new Item(null, "title", "description", 12.0);
-        Item savedItem = itemRepository.save(item);
+        Item savedItem = itemRepository.save(item).block();
 
-        Optional<Item> actualItem = itemService.findItemById(savedItem.getId());
+        assertNotNull(savedItem);
+
+        Optional<Item> actualItem = itemService.findItemById(savedItem.getId()).blockOptional();
 
         assertTrue(actualItem.isPresent(), "Изображение должно быть");
         assertEquals("description", actualItem.get().getDescription(), "Описание должно быть description");
     }
 
     @Test
-    void saveItemWithImage_shouldReturnSavedItem(){
+    void saveItemWithImage_shouldReturnSavedItemId(){
         Item item = new Item(null, "title", "description", 12.0);
         Image image = new Image(null, null, new byte[]{1});
 
-        Item actualItem = itemService.saveItemWithImage(item, image);
+        Long actualItemId = itemService.saveItemWithImage(item, image).block();
 
-        assertNotNull(actualItem, "Изображение должно быть");
-        assertEquals("description", actualItem.getDescription(), "Описание должно быть description");
+        assertNotNull(actualItemId, "Изображение должно быть");
     }
 
     @Test
@@ -63,14 +67,30 @@ public class ItemServiceIntegrationTest extends BaseServiceIntegrationTest{
         Item item = new Item(null, "title", "description", 12.0);
         Image image = new Image(null, null, new byte[]{1});
 
-        itemService.saveItemWithImage(item, image);
+        itemService.saveItemWithImage(item, image).block();
 
         Paging paging = new Paging(1, 10, false, false);
 
-        List<ItemDto> items = itemService.searchPaginatedAndSorted("", paging, Sorting.NO);
+        Page<ItemDto> items = itemService.searchPaginatedAndSorted("", paging, Sorting.NO).block();
 
-        assertEquals(1, items.size(), "Количество товаров должно быть равно 1");
-        assertEquals("description", items.get(0).getDescription(), "Описание должно быть description");
+        assertNotNull(items, "Элементы должны быть");
+
+        List<ItemDto> itemsList = items.get().toList();
+
+        assertEquals(1, itemsList.size(), "Количество товаров должно быть равно 1");
+        assertEquals("description", itemsList.get(0).getDescription(), "Описание должно быть description");
+    }
+
+    @Test
+    void findAll_shouldReturnListOfItem(){
+        Item item = new Item(null, "title", "description", 12.0);
+        Image image = new Image(null, null, new byte[]{1});
+
+        itemService.saveItemWithImage(item, image).block();
+        
+        List<Item> items = itemService.findAll().collectList().block();
+
+        assertNotNull(items, "Элементы должны быть");
     }
 
 }
