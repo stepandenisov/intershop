@@ -24,7 +24,6 @@ public class Order {
     @Setter
     @With
     @Transient
-//    @OneToMany(mappedBy = "order", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<OrderItem> orderItems = new ArrayList<>();
 
 

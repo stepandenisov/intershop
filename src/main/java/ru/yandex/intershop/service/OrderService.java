@@ -12,8 +12,6 @@ import ru.yandex.intershop.repository.OrderRepository;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Optional;
-import java.util.stream.Collectors;
 
 
 @Service
@@ -24,9 +22,15 @@ public class OrderService {
     private final OrderItemRepository orderItemRepository;
     private final CartService cartService;
 
-    public OrderService(OrderRepository orderRepository, CartService cartService, OrderItemRepository orderItemRepository){
+    private final ItemService itemService;
+
+    public OrderService(OrderRepository orderRepository,
+                        CartService cartService,
+                        OrderItemRepository orderItemRepository,
+                        ItemService itemService){
         this.orderRepository = orderRepository;
         this.cartService = cartService;
+        this.itemService = itemService;
         this.orderItemRepository = orderItemRepository;
     }
 
@@ -37,7 +41,9 @@ public class OrderService {
                             .map(cartItem -> new OrderItem(null,
                                     savedOrder.getId(),
                                     cartItem.getItemId(),
-                                    cartItem.getItemCount())).toList();
+                                    cartItem.getItemCount(),
+                                    cartItem.getItem().getPrice(),
+                                    cartItem.getItem())).toList();
                     return orderItemRepository.saveAll(orderItems)
                             .then(cartService.removeItemsFromCart())
                             .then(Mono.just(savedOrder));
@@ -48,8 +54,10 @@ public class OrderService {
         return orderRepository.findById(id)
                 .flatMap(order ->
                         Mono.just(order)
-                                .zipWith(orderItemRepository.findAllByOrderId(order.getId()).collectList())
-                                .map(tupla -> tupla.getT1().withOrderItems(tupla.getT2()))
+                                .zipWith(orderItemRepository.findAllByOrderId(order.getId())
+                                        .zipWith(itemService.findAll())
+                                        .map(tuple -> tuple.getT1().withItem(tuple.getT2())).collectList())
+                                .map(tuple -> tuple.getT1().withOrderItems(tuple.getT2()))
                 );
     }
 
@@ -57,8 +65,9 @@ public class OrderService {
         return orderRepository.findAll()
                 .flatMap(orders ->
                         Mono.just(orders)
-                                  .zipWith(orderItemRepository.findAllByOrderId(orders.getId()).collectList())
-                                .map(tupla -> tupla.getT1().withOrderItems(tupla.getT2()))
+                                  .zipWith(orderItemRepository.findAllByOrderId(orders.getId()).zipWith(itemService.findAll())
+                                          .map(tuple -> tuple.getT1().withItem(tuple.getT2())).collectList())
+                                .map(tuple -> tuple.getT1().withOrderItems(tuple.getT2()))
                 );
     }
 

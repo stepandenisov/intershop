@@ -1,10 +1,9 @@
 package ru.yandex.intershop.model.order;
 
 
-import lombok.AllArgsConstructor;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
+import lombok.*;
 import org.springframework.data.annotation.Id;
+import org.springframework.data.annotation.Transient;
 import org.springframework.data.relational.core.mapping.Column;
 import org.springframework.data.relational.core.mapping.Table;
 import ru.yandex.intershop.model.item.Item;
@@ -27,4 +26,11 @@ public class OrderItem {
     @Column("item_count")
     Integer itemCount;
 
+    @Column("item_price")
+    Double itemPrice;
+
+    @Setter
+    @With
+    @Transient
+    Item item;
 }
