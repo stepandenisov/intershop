@@ -1,14 +1,11 @@
 package ru.yandex.intershop.model.cart;
 
-import lombok.AllArgsConstructor;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
+import lombok.*;
 import org.springframework.data.annotation.Id;
+import org.springframework.data.annotation.Transient;
 import org.springframework.data.relational.core.mapping.Column;
 import org.springframework.data.relational.core.mapping.Table;
 import ru.yandex.intershop.model.item.Item;
-import ru.yandex.intershop.model.order.OrderItem;
 
 import java.util.Objects;
 
@@ -30,6 +27,11 @@ public class CartItem {
     @Setter
     @Column("item_count")
     Integer itemCount;
+
+    @Setter
+    @With
+    @Transient
+    Item item;
 
     @Override
     public boolean equals(Object other){

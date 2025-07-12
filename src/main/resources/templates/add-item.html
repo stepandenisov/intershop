@@ -2,6 +2,7 @@
 <html lang="en" xmlns:th="http://www.thymeleaf.org">
 
 <head>
+    <meta charset="UTF-8"/>
     <title>Витрина товаров</title>
 </head>
 
@@ -14,7 +15,9 @@
         <tr>
             <td>
                 <h3>Название</h3>
-                <textarea rows="2" style="width: 100%;" name="title" th:text="${''}"/>
+                <label>
+                    <textarea rows="2" style="width: 100%;" name="title" th:text="${''}"/>
+                </label>
             </td>
         </tr>
         <tr>
@@ -26,13 +29,17 @@
         <tr>
             <td>
                 <h3>Описание</h3>
-                <textarea rows="30" style="width: 100%;" name="description" th:text="${''}"/>
+                <label>
+                    <textarea rows="30" style="width: 100%;" name="description" th:text="${''}"/>
+                </label>
             </td>
         </tr>
         <tr>
             <td>
                 <h3>Цена</h3>
-                <textarea rows="2" style="width: 100%;" name="price" th:text="${#numbers.formatDecimal(price, 0, 'COMMA', 0, 'POINT')}"/>
+                <label>
+                    <textarea rows="2" style="width: 100%;" name="price" th:text="${#numbers.formatDecimal(price, 0, 'COMMA', 0, 'POINT')}"/>
+                </label>
             </td>
         </tr>
         <tr>

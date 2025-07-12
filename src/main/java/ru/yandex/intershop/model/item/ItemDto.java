@@ -3,7 +3,6 @@ package ru.yandex.intershop.model.item;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
-import ru.yandex.intershop.model.item.Item;
 
 @AllArgsConstructor
 @NoArgsConstructor
@@ -18,5 +17,5 @@ public class ItemDto {
 
     private Double price;
 
-    private Integer count = 0;
+    private Integer count = null;
 }

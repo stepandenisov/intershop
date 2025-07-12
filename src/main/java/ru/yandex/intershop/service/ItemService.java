@@ -1,5 +1,7 @@
 package ru.yandex.intershop.service;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
@@ -11,15 +13,14 @@ import ru.yandex.intershop.model.item.Item;
 import ru.yandex.intershop.model.item.ItemDto;
 import ru.yandex.intershop.repository.ItemRepository;
 
-import java.util.List;
 import java.util.Objects;
-import java.util.Optional;
 
 @Service
 public class ItemService {
 
     private final ItemRepository itemRepository;
     private final ImageService imageService;
+
 
     public ItemService(ItemRepository itemRepository, ImageService imageService) {
         this.itemRepository = itemRepository;
@@ -37,20 +38,19 @@ public class ItemService {
     public Mono<Long> saveItemWithImage(Item item, Image image) {
         return itemRepository.save(item)
                 .flatMap(savedItem -> {
-                    System.out.println("HERE");
                     image.setItemId(savedItem.getId());
                     return imageService.save(image)
                             .flatMap(savedImage -> Mono.just(savedImage.getItemId()));
                 });
     }
 
-    public Flux<ItemDto> searchPaginatedAndSorted(String search, Paging paging, Sorting sort) {
+    public Mono<Page<ItemDto>> searchPaginatedAndSorted(String search, Paging paging, Sorting sort) {
         Flux<ItemDto> items = search.isBlank() ? findAllPaginated(paging, sort) : searchAllPaginated(search, paging, sort);
-        Mono<Long> count = search.isBlank()
+        Mono<Long> countByCondition = search.isBlank()
                 ? itemRepository.count()
                 : itemRepository.countAllByTitleStartingWithOrDescriptionStartingWith(search, search);
 
-        return count.flatMapMany(cnt -> {
+        Mono<Long> count = countByCondition.doOnNext(cnt -> {
             long totalPageCount = (cnt - 1) / paging.getPageSize() + 1;
             if (paging.getPageNumber() == 1) {
                 paging.setHasPrevious(false);
@@ -58,21 +58,30 @@ public class ItemService {
                 paging.setHasPrevious(!Objects.equals(totalPageCount, 1L));
             }
             paging.setHasNext(totalPageCount > paging.getPageNumber());
-            return items;
         });
+        PageRequest pageRequest = PageRequest.of(paging.getPageNumber() - 1,
+                paging.getPageSize(),
+                Sort.by(sort.field));
+        return Mono.zip(items.collectList(), count)
+                .map(p -> new PageImpl<>(p.getT1(), pageRequest, p.getT2()));
     }
 
     private Flux<ItemDto> searchAllPaginated(String search, Paging paging, Sorting sorting) {
-        return itemRepository.findAllByTitleStartsWithOrDescriptionStartsWithDto(search,
-                PageRequest.of(paging.getPageNumber() - 1,
-                        paging.getPageSize(),
-                        Sort.by(sorting.field)));
+        PageRequest pageable = PageRequest.of(paging.getPageNumber() - 1,
+                paging.getPageSize(),
+                Sort.by(sorting.field));
+        return itemRepository.findAllByTitleStartsWithOrDescriptionStartsWithDtoSortByOffsetLimit(pageable, search);
     }
 
     private Flux<ItemDto> findAllPaginated(Paging paging, Sorting sorting) {
-        return itemRepository.findAllDto(PageRequest.of(paging.getPageNumber() - 1,
+        PageRequest pageable = PageRequest.of(paging.getPageNumber() - 1,
                 paging.getPageSize(),
-                Sort.by(sorting.field)));
+                Sort.by(sorting.field));
+        return itemRepository.findAllDtoSortByOffsetLimit(pageable);
+    }
+
+    public Flux<Item> findAll() {
+        return itemRepository.findAll();
     }
 
 }
