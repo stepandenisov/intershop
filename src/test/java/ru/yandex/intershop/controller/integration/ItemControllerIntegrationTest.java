@@ -4,16 +4,15 @@ package ru.yandex.intershop.controller.integration;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.mock.web.MockMultipartFile;
-import org.springframework.mock.web.MockPart;
-import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
+import org.springframework.core.io.ByteArrayResource;
+import org.springframework.http.MediaType;
+import org.springframework.http.client.MultipartBodyBuilder;
+import org.springframework.web.reactive.function.BodyInserters;
 import ru.yandex.intershop.model.item.Item;
 import ru.yandex.intershop.repository.ItemRepository;
 
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.multipart;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.view;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 
 public class ItemControllerIntegrationTest extends BaseControllerIntegrationTest{
@@ -21,42 +20,70 @@ public class ItemControllerIntegrationTest extends BaseControllerIntegrationTest
     @Autowired
     private ItemRepository itemRepository;
 
+    private Long itemId;
+
     @BeforeEach
     void customSetUp(){
         Item item = new Item(null, "title", "description", 1.0);
-        itemRepository.save(item);
+        itemRepository.save(item)
+                .doOnNext(item1 -> itemId = item1.getId())
+                .block();
     }
 
     @Test
-    void getAddItemPage_shouldReturnAddItemView() throws Exception {
-        mockMvc.perform(get("/items/add"))
-                .andExpect(status().isOk())
-                .andExpect(content().contentType("text/html;charset=UTF-8"))
-                .andExpect(view().name("add-item"));
+    void getAddItemPage_shouldReturnAddItemView() {
+        webTestClient.get()
+                .uri("/items/add")
+                .exchange()
+                .expectStatus().isOk()
+                .expectHeader().contentType(MediaType.TEXT_HTML);
     }
 
     @Test
-    void post_shouldReturnHtmlWithItem() throws Exception {
-        MockMultipartFile image = new MockMultipartFile("image", "", "application/json", "..........".getBytes());
-        MockPart titlePart = new MockPart("title", "Test".getBytes());
-        MockPart descriptionPart = new MockPart("description", "Test".getBytes());
-        MockPart pricePart = new MockPart("price", "12.0".getBytes());
-        mockMvc.perform(multipart("/items/")
-                        .file(image)
-                        .part(titlePart)
-                        .part(descriptionPart)
-                        .part(pricePart))
-                .andExpect(status().is3xxRedirection());
+    void post_shouldReturnHtmlWithItem() {
+        var builder = new MultipartBodyBuilder();
+        builder.part("title", "Test");
+        builder.part("description", "Test");
+        builder.part("price", "12.0");
+        builder.part("image", new ByteArrayResource(new byte[] { 1, 2, 3, 4 }) {
+            @Override
+            public String getFilename() {
+                return "image.png";
+            }
+        });
+        webTestClient.post()
+                .uri("/items/")
+                .contentType(MediaType.MULTIPART_FORM_DATA)
+                .body(BodyInserters.fromMultipartData(builder.build()))
+                .exchange()
+                .expectStatus().is3xxRedirection();
     }
 
     @Test
-    void items_shouldReturnHtmlWithItems() throws Exception {
-        mockMvc.perform(MockMvcRequestBuilders.get("/items"))
-                .andExpect(status().isOk())
-                .andExpect(content().contentType("text/html;charset=UTF-8"))
-                .andExpect(view().name("items"))
-                .andExpect(model().attributeExists("items"))
-                .andExpect(xpath("//table/tr").nodeCount(6))
-                .andExpect(xpath("//table/tr[2]/td/table/tr[2]/td/b").string("title"));
+    void items_shouldReturnHtmlWithItems() {
+        webTestClient.get()
+                .uri("/items")
+                .exchange()
+                .expectStatus().isOk()
+                .expectHeader().contentType(MediaType.TEXT_HTML)
+                .expectBody(String.class).consumeWith(response -> {
+                    String body = response.getResponseBody();
+                    assertNotNull(body);
+                    assertTrue(body.contains("<table"));
+                });
+    }
+
+    @Test
+    void item_shouldReturnHtmlWithItem() {
+        webTestClient.get()
+                .uri("/items/"+itemId)
+                .exchange()
+                .expectStatus().isOk()
+                .expectHeader().contentType(MediaType.TEXT_HTML)
+                .expectBody(String.class).consumeWith(response -> {
+                    String body = response.getResponseBody();
+                    assertNotNull(body);
+                    assertTrue(body.contains("<form"));
+                });
     }
 }

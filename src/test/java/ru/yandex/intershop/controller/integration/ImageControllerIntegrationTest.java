@@ -3,17 +3,13 @@ package ru.yandex.intershop.controller.integration;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.MediaType;
-import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 import ru.yandex.intershop.model.image.Image;
 import ru.yandex.intershop.model.item.Item;
 import ru.yandex.intershop.repository.ImageRepository;
 import ru.yandex.intershop.repository.ItemRepository;
 
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
-
-public class ImageControllerIntegrationTest extends BaseControllerIntegrationTest{
+public class ImageControllerIntegrationTest extends BaseControllerIntegrationTest {
 
     @Autowired
     private ImageRepository imageRepository;
@@ -21,17 +17,23 @@ public class ImageControllerIntegrationTest extends BaseControllerIntegrationTes
     @Autowired
     private ItemRepository itemRepository;
 
+    private Long imageId;
+
     @BeforeEach
-    void customSetUp(){
-        Item item = new Item(null, "title", "description", 1.0);
-        Item savedItem = itemRepository.save(item);
-        Image image = new Image(null, savedItem.getId(), new byte[]{1});
-        imageRepository.save(image);
+    void customSetUp() {
+        itemRepository.save(new Item(null, "title", "description", 1.0))
+                .flatMap(item ->
+                        imageRepository.save(new Image(null, item.getId(), new byte[]{1}))
+                )
+                .doOnNext(image -> imageId = image.getId())
+                .block();
     }
 
     @Test
-    void image_shouldReturnImageBytes() throws Exception {
-        mockMvc.perform(MockMvcRequestBuilders.get("/images/5"))
-                .andExpect(status().isOk());
+    void image_shouldReturnImageBytes() {
+        webTestClient.get()
+                .uri("/images/" + imageId.toString())
+                .exchange()
+                .expectStatus().isOk();
     }
 }
