@@ -2,6 +2,7 @@
 <html lang="en" xmlns:th="http://www.thymeleaf.org">
 
 <head>
+    <meta charset="UTF-8"/>
     <title>Корзина товаров</title>
 </head>
 
@@ -18,7 +19,7 @@
             <table>
                 <tr>
                     <td>
-                        <img width="300" height="300" th:src="${'http://localhost:8080/images/'+cartItem.getItem().getId()}"/>
+                        <img width="300" height="300" th:src="${'http://localhost:8080/images/'+cartItem.getItemId()}"/>
                     </td>
                 </tr>
                 <tr>
@@ -32,11 +33,11 @@
                 <tr><td th:text="${cartItem.getItem().getDescription()}"></td></tr>
                 <tr>
                     <td>
-                        <form th:action="@{${'/cart/items/'+cartItem.getItem().getId()}(redirectUrl='/cart/items')}" method="post">
-                            <button name="action" value="MINUS">-</button>
+                        <form th:action="@{${'/cart/items/'+cartItem.getItem().getId()}(redirectUrl='/cart/items')}" method="POST" enctype="multipart/form-data">
+                            <button type="submit" name="action" th:value="MINUS">-</button>
                             <span th:text="${cartItem.getItemCount()}"></span>
-                            <button name="action" value="PLUS">+</button>
-                            <button name="action" value="DELETE" style="float:right;">x</button>
+                            <button type="submit" name="action" th:value="PLUS">+</button>
+                            <button type="submit" name="action" th:value="DELETE" style="float:right;">x</button>
                         </form>
                     </td>
                 </tr>

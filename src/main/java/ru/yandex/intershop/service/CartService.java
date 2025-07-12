@@ -10,7 +10,6 @@ import ru.yandex.intershop.repository.CartItemRepository;
 import ru.yandex.intershop.repository.CartRepository;
 
 import java.util.ArrayList;
-import java.util.List;
 import java.util.Objects;
 
 @Service
@@ -34,24 +33,27 @@ public class CartService {
         return cartRepository.save(cart);
     }
 
-    public Mono<Cart> findCartWithCartItemsById(Long id){
+
+    public Mono<Cart> findCartWithCartItemsById(Long id) {
         return cartRepository.findById(id)
                 .flatMap(cart ->
                         Mono.just(cart)
-                                .zipWith(cartItemRepository.findAllByCartId(cart.getId()).collectList())
-                                .map(tupla -> tupla.getT1().withCartItems(tupla.getT2()))
+                                .zipWith(cartItemRepository.findAllByCartId(cart.getId())
+                                        .zipWith(itemService.findAll())
+                                        .map(tuple -> tuple.getT1().withItem(tuple.getT2())).collectList())
+                                .map(tuple -> tuple.getT1().withCartItems(tuple.getT2()))
                 );
     }
 
     public Mono<Void> modifyItemCountByItemId(Long itemId, Action action) {
-        return findCartWithCartItemsById(1L).flatMap(cart -> {
-                    if (cart == null) {
-                        return createEmptyCart();
-                    } else {
-                        return Mono.just(cart);
-                    }
-                })
+        return findCartWithCartItemsById(1L)
+                .switchIfEmpty(createEmptyCart())
                 .flatMap(cart -> Flux.fromIterable(cart.getCartItems())
+                        .switchIfEmpty(Flux.defer(() -> itemService.findItemById(itemId)
+                                .flatMap(item -> Mono.just(new CartItem(null, cart.getId(), item.getId(), 0, item)))
+                                .flatMap(cartItemRepository::save)
+                                .doOnNext(cart.getCartItems()::add)
+                        ))
                         .filter(cartItem -> Objects.equals(cartItem.getItemId(), itemId))
                         .single()
                         .flatMap(cartItem -> switch (action) {
@@ -62,9 +64,12 @@ public class CartService {
                             case MINUS -> {
                                 if (cartItem.getItemCount() > 0) {
                                     cartItem.setItemCount(cartItem.getItemCount() - 1);
-                                    yield cartItemRepository.save(cartItem);
-                                }
-                                else {
+                                    if (cartItem.getItemCount() == 0){
+                                        yield cartItemRepository.delete(cartItem);
+                                    } else {
+                                        yield cartItemRepository.save(cartItem);
+                                    }
+                                } else {
                                     cart.getCartItems().remove(cartItem);
                                     yield cartItemRepository.delete(cartItem);
                                 }
@@ -74,28 +79,19 @@ public class CartService {
                                 yield cartItemRepository.delete(cartItem);
                             }
                         })
-                        .switchIfEmpty(Mono.defer(() -> {
-                                            if (action == Action.PLUS) {
-                                                return itemService.findItemById(itemId)
-                                                        .flatMap(item -> {
-                                                            if (item != null) {
-                                                                return Mono.just(new CartItem(null, cart.getId(), item.getId(), 1));
-                                                            }
-                                                            return Mono.empty();
-                                                        })
-                                                        .flatMap(cartItemRepository::save)
-                                                        .doOnNext(cart.getCartItems()::add);
-                                            }
-                                            return Mono.empty();
-                                        })))
-                .then(updateTotalOfCartById(1L));
+                ).then(updateTotalOfCartById(1L));
     }
 
-    private Mono<Void> updateTotalOfCartById(Long cartId){
-        return findCartWithCartItemsById(cartId)
-                .flatMap(cart -> cartItemRepository.getTotalPriceByCartId(cart.getId())
-                        .doOnNext(cart::setTotal))
-                .then();
+    private Mono<Void> updateTotalOfCartById(Long cartId) {
+        Mono<Cart> cartMono = findCartWithCartItemsById(cartId);
+        return cartMono.flatMap(cart -> {
+            Double total = cart.getCartItems().stream()
+                    .map(cartItem -> cartItem.getItem().getPrice() * cartItem.getItemCount())
+                    .reduce(Double::sum)
+                    .orElse(0.0);
+            cart.setTotal(total);
+            return cartRepository.save(cart).then();
+        });
     }
 
     public Mono<Void> removeItemsFromCart() {

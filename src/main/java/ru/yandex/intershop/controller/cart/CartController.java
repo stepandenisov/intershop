@@ -1,5 +1,6 @@
 package ru.yandex.intershop.controller.cart;
 
+import org.springframework.http.MediaType;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
@@ -21,11 +22,12 @@ public class CartController {
         this.orderService = orderService;
     }
 
-    @PostMapping("/{id}")
-    public Mono<String> modifyItemCount(@PathVariable Long id,
-                                  @RequestParam Action action,
-                                  @RequestParam String redirectUrl) {
-        return cartService.modifyItemCountByItemId(id, action)
+    @PostMapping(value = "/{id}", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    public Mono<String> modifyItemCount(@PathVariable(name="id") Long id,
+                                        @RequestParam(name="redirectUrl") String redirectUrl,
+                                        @RequestPart(name = "action") String action
+    ) {
+        return cartService.modifyItemCountByItemId(id, Action.valueOf(action))
                 .then(Mono.just("redirect:" + redirectUrl));
     }
 
@@ -36,7 +38,7 @@ public class CartController {
                 .flatMap(order -> Mono.just("redirect:/orders/" + order.getId() + "?newOrder=true"));
     }
 
-    @GetMapping
+    @GetMapping(value = {"", "/"})
     public Mono<String> cart(Model model) {
         return cartService.findCartWithCartItemsById(1L)
                 .flatMap(cart -> {
