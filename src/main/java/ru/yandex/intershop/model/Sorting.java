@@ -1,7 +1,5 @@
 package ru.yandex.intershop.model;
 
-import lombok.Getter;
-
 public enum Sorting {
     NO("id"),
     ALPHA("title"),
