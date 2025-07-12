@@ -8,7 +8,6 @@ import lombok.Setter;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.relational.core.mapping.Column;
 import org.springframework.data.relational.core.mapping.Table;
-import ru.yandex.intershop.model.order.Order;
 
 import java.util.Objects;
 
@@ -26,7 +25,7 @@ public class Image {
     private Long itemId;
 
     @Column("image")
-    private Byte[] imageBytes;
+    private byte[] imageBytes;
 
     @Override
     public boolean equals(Object other){

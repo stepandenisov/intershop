@@ -6,7 +6,6 @@ import reactor.core.publisher.Mono;
 import ru.yandex.intershop.model.image.Image;
 import ru.yandex.intershop.repository.ImageRepository;
 
-import java.util.Optional;
 
 @Service
 public class ImageService {
@@ -22,7 +21,6 @@ public class ImageService {
     }
 
     public Mono<Image> save(Image image){
-        System.out.println("HERE 2");
         return imageRepository.save(image);
     }
 }
