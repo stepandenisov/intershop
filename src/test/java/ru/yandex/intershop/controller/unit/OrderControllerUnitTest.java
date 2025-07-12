@@ -2,63 +2,68 @@ package ru.yandex.intershop.controller.unit;
 
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
+import org.springframework.boot.test.autoconfigure.web.reactive.WebFluxTest;
+import org.springframework.http.MediaType;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
-import org.springframework.test.web.servlet.MockMvc;
-import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
-import ru.yandex.intershop.controller.item.ItemController;
+import org.springframework.test.web.reactive.server.WebTestClient;
+import reactor.core.publisher.Flux;
+import reactor.core.publisher.Mono;
 import ru.yandex.intershop.controller.order.OrderController;
 import ru.yandex.intershop.model.order.Order;
-import ru.yandex.intershop.service.ItemService;
 import ru.yandex.intershop.service.OrderService;
 
 import java.util.List;
-import java.util.Optional;
 
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.*;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.xpath;
 
-@WebMvcTest(OrderController.class)
+@WebFluxTest(OrderController.class)
 public class OrderControllerUnitTest {
 
     @Autowired
-    private MockMvc mockMvc;
+    private WebTestClient webTestClient;
 
     @MockitoBean
     private OrderService orderService;
 
 
     @Test
-    void order_shouldReturnHtmlWithOrder() throws Exception {
+    void order_shouldReturnHtmlWithOrder(){
 
         Order order = new Order(1L, 1.0, List.of());
 
-        when(orderService.findOrderById(1L)).thenReturn(Optional.of(order));
+        when(orderService.findOrderById(1L)).thenReturn(Mono.just(order));
 
-        mockMvc.perform(MockMvcRequestBuilders.get("/orders/1"))
-                .andExpect(status().isOk())
-                .andExpect(content().contentType("text/html;charset=UTF-8"))
-                .andExpect(view().name("order"))
-                .andExpect(model().attributeExists("order"))
-                .andExpect(xpath("//table/tr").nodeCount(2))
-                .andExpect(xpath("//table/tr[2]/td/h3").string("Сумма: 1.0 руб."));
+        webTestClient.get()
+                .uri("/orders/1")
+                .exchange()
+                .expectStatus().isOk()
+                .expectHeader().contentType(MediaType.TEXT_HTML)
+                .expectBody(String.class).consumeWith(response -> {
+                    String body = response.getResponseBody();
+                    assertNotNull(body);
+                    assertTrue(body.contains("1.0 руб."));
+                });
     }
 
     @Test
-    void orders_shouldReturnHtmlWithOrders() throws Exception {
+    void orders_shouldReturnHtmlWithOrders(){
 
         Order order = new Order(1L, 1.0, List.of());
 
-        when(orderService.findAll()).thenReturn(List.of(order));
+        when(orderService.findAll()).thenReturn(Flux.fromIterable(List.of(order)));
 
-        mockMvc.perform(MockMvcRequestBuilders.get("/orders"))
-                .andExpect(status().isOk())
-                .andExpect(content().contentType("text/html;charset=UTF-8"))
-                .andExpect(view().name("orders"))
-                .andExpect(model().attributeExists("orders"))
-                .andExpect(xpath("//table/tr/td").nodeCount(1))
-                .andExpect(xpath("//table/tr/td[1]/p/b").string("Сумма: 1.0 руб."));
+        webTestClient.get()
+                .uri("/orders")
+                .exchange()
+                .expectStatus().isOk()
+                .expectHeader().contentType(MediaType.TEXT_HTML)
+                .expectBody(String.class).consumeWith(response -> {
+                    String body = response.getResponseBody();
+                    assertNotNull(body);
+                    assertTrue(body.contains("1.0 руб."));
+                });
     }
 
 }

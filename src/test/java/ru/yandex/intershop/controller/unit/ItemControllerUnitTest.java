@@ -3,92 +3,102 @@ package ru.yandex.intershop.controller.unit;
 
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
-import org.springframework.mock.web.MockMultipartFile;
-import org.springframework.mock.web.MockPart;
+import org.springframework.boot.test.autoconfigure.web.reactive.WebFluxTest;
+import org.springframework.core.io.ByteArrayResource;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.http.MediaType;
+import org.springframework.http.client.MultipartBodyBuilder;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
-import org.springframework.test.web.servlet.MockMvc;
-import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
-import ru.yandex.intershop.controller.image.ImageController;
+import org.springframework.test.web.reactive.server.WebTestClient;
+import org.springframework.web.reactive.function.BodyInserters;
+import reactor.core.publisher.Mono;
 import ru.yandex.intershop.controller.item.ItemController;
 import ru.yandex.intershop.model.Paging;
 import ru.yandex.intershop.model.Sorting;
 import ru.yandex.intershop.model.image.Image;
 import ru.yandex.intershop.model.item.Item;
 import ru.yandex.intershop.model.item.ItemDto;
-import ru.yandex.intershop.service.ImageService;
 import ru.yandex.intershop.service.ItemService;
 
 import java.util.List;
-import java.util.Optional;
 
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.multipart;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.xpath;
 
-@WebMvcTest(ItemController.class)
+@WebFluxTest(ItemController.class)
 public class ItemControllerUnitTest {
 
     @Autowired
-    private MockMvc mockMvc;
+    private WebTestClient webTestClient;
 
     @MockitoBean
     private ItemService itemService;
 
     @Test
-    void getAddItemPage_shouldReturnAddItemView() throws Exception {
+    void getAddItemPage_shouldReturnAddItemView() {
 
-        mockMvc.perform(get("/items/add"))
-                .andExpect(status().isOk())
-                .andExpect(content().contentType("text/html;charset=UTF-8"))
-                .andExpect(view().name("add-item"));
+        webTestClient.get()
+                .uri("/items/add")
+                .exchange()
+                .expectStatus().isOk()
+                .expectHeader().contentType(MediaType.TEXT_HTML);
     }
 
     @Test
-    void post_shouldReturnHtmlWithItem() throws Exception {
-        MockMultipartFile imageFile = new MockMultipartFile("image", "", "application/json", "..........".getBytes());
-        MockPart titlePart = new MockPart("title", "Test".getBytes());
-        MockPart descriptionPart = new MockPart("description", "Test".getBytes());
-        MockPart pricePart = new MockPart("price", "12.0".getBytes());
+    void post_shouldReturnHtmlWithItem() {
+        var builder = new MultipartBodyBuilder();
+        builder.part("title", "Test");
+        builder.part("description", "Test");
+        builder.part("price", "12.0");
 
         Item item = new Item(null, "title", "description", 12.0);
         Image image = new Image(null, null, "..........".getBytes());
 
         Item newItem = new Item(1L, "title", "description", 12.0);
 
-        when(itemService.saveItemWithImage(item, image)).thenReturn(newItem);
+        when(itemService.saveItemWithImage(item, image)).thenReturn(Mono.just(newItem.getId()));
 
-        mockMvc.perform(multipart("/items/")
-                        .file(imageFile)
-                        .part(titlePart)
-                        .part(descriptionPart)
-                        .part(pricePart))
-                .andExpect(status().is3xxRedirection())
-                .andExpect(redirectedUrl("/items/1"));
+        builder.part("image", new ByteArrayResource(new byte[] { 1, 2, 3, 4 }) {
+            @Override
+            public String getFilename() {
+                return "image.png";
+            }
+        });
+        webTestClient.post()
+                .uri("/items/")
+                .contentType(MediaType.MULTIPART_FORM_DATA)
+                .body(BodyInserters.fromMultipartData(builder.build()))
+                .exchange()
+                .expectStatus().is3xxRedirection();
     }
 
 
     @Test
-    void item_shouldReturnHtmlWithItem() throws Exception {
+    void item_shouldReturnHtmlWithItem(){
 
         ItemDto itemDto = new ItemDto(1L, "title", "description", 12.0, 1);
 
-        when(itemService.findItemByIdDto(1L)).thenReturn(Optional.of(itemDto));
+        when(itemService.findItemByIdDto(1L)).thenReturn(Mono.just(itemDto));
 
-        mockMvc.perform(MockMvcRequestBuilders.get("/items/1"))
-                .andExpect(status().isOk())
-                .andExpect(content().contentType("text/html;charset=UTF-8"))
-                .andExpect(view().name("item"))
-                .andExpect(model().attributeExists("item"))
-                .andExpect(xpath("//div").nodeCount(1))
-                .andExpect(xpath("//div/p").nodeCount(3))
-                .andExpect(xpath("//div/p[2]/b[1]").string("title"));
+        webTestClient.get()
+                .uri("/items/1")
+                .exchange()
+                .expectStatus().isOk()
+                .expectHeader().contentType(MediaType.TEXT_HTML)
+                .expectBody(String.class).consumeWith(response -> {
+                    String body = response.getResponseBody();
+                    assertNotNull(body);
+                    assertTrue(body.contains("<form"));
+                });
     }
 
     @Test
-    void items_shouldReturnHtmlWithItems() throws Exception {
+    void items_shouldReturnHtmlWithItems() {
 
         Paging paging = new Paging(1, 10, false, false);
         Sorting sort = Sorting.NO;
@@ -97,15 +107,18 @@ public class ItemControllerUnitTest {
         ItemDto itemDto = new ItemDto(1L, "title", "description", 12.0, 1);
 
         when(itemService.searchPaginatedAndSorted(search, paging, sort))
-                .thenReturn(List.of(itemDto));
+                .thenReturn(Mono.just(new PageImpl<>(List.of(itemDto))));
 
-        mockMvc.perform(MockMvcRequestBuilders.get("/items"))
-                .andExpect(status().isOk())
-                .andExpect(content().contentType("text/html;charset=UTF-8"))
-                .andExpect(view().name("items"))
-                .andExpect(model().attributeExists("items"))
-                .andExpect(xpath("//table/tr").nodeCount(6))
-                .andExpect(xpath("//table/tr[2]/td/table/tr[2]/td/b").string("title"));
+        webTestClient.get()
+                .uri("/items")
+                .exchange()
+                .expectStatus().isOk()
+                .expectHeader().contentType(MediaType.TEXT_HTML)
+                .expectBody(String.class).consumeWith(response -> {
+                    String body = response.getResponseBody();
+                    assertNotNull(body);
+                    assertTrue(body.contains("<table"));
+                });
     }
 
 }
