@@ -2,13 +2,11 @@ package ru.yandex.intershop.service.unit;
 
 
 import org.junit.jupiter.api.Test;
-import org.mockito.InjectMocks;
-import org.mockito.Mock;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.TestPropertySource;
-import ru.yandex.intershop.model.Paging;
-import ru.yandex.intershop.model.Sorting;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
+import reactor.core.publisher.Mono;
 import ru.yandex.intershop.model.image.Image;
 import ru.yandex.intershop.model.item.Item;
 import ru.yandex.intershop.model.item.ItemDto;
@@ -16,7 +14,6 @@ import ru.yandex.intershop.repository.ItemRepository;
 import ru.yandex.intershop.service.ImageService;
 import ru.yandex.intershop.service.ItemService;
 
-import java.util.List;
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -26,21 +23,21 @@ import static org.mockito.Mockito.*;
 @TestPropertySource(locations = "classpath:application-test.properties")
 public class ItemServiceUnitTest {
 
-    @InjectMocks
+    @Autowired
     private ItemService itemService;
 
-    @Mock
+    @MockitoBean
     private ItemRepository itemRepository;
 
-    @Mock
+    @MockitoBean
     private ImageService imageService;
 
     @Test
     void findItemByIdDto_shouldReturnItemDto(){
         ItemDto itemDto = new ItemDto(1L, "title", "description", 12.0, 1);
-        doReturn(Optional.of(itemDto)).when(itemRepository).findByIdDto(1L);
+        when(itemRepository.findByIdDto(1L)).thenReturn(Mono.just(itemDto));
 
-        Optional<ItemDto> actualItemDto = itemService.findItemByIdDto(1L);
+        Optional<ItemDto> actualItemDto = itemService.findItemByIdDto(1L).blockOptional();
 
         assertTrue(actualItemDto.isPresent(), "Товар должен быть");
         assertEquals("description", actualItemDto.get().getDescription(), "Описание должно быть description");
@@ -51,9 +48,9 @@ public class ItemServiceUnitTest {
     @Test
     void findItemById_shouldReturnItem(){
         Item item = new Item(1L, "title", "description", 12.0);
-        doReturn(Optional.of(item)).when(itemRepository).findById(1L);
+        when(itemRepository.findById(1L)).thenReturn(Mono.just(item));
 
-        Optional<Item> actualItem = itemService.findItemById(1L);
+        Optional<Item> actualItem = itemService.findItemById(1L).blockOptional();
 
         assertTrue(actualItem.isPresent(), "Товар должен быть");
         assertEquals("description", actualItem.get().getDescription(), "Описание должно быть description");
@@ -64,12 +61,11 @@ public class ItemServiceUnitTest {
         Item item = new Item(1L, "title", "description", 12.0);
         Image image = new Image(1L, null, new byte[]{1});
 
-        doReturn(item).when(itemRepository).save(item);
-        doNothing().when(imageService).save(image);
+        when(itemRepository.save(any(Item.class))).thenReturn(Mono.just(item));
+        when(imageService.save(any(Image.class))).thenReturn(Mono.just(image));
 
-        Item actualItem = itemService.saveItemWithImage(item, image);
+        Long actualItemId = itemService.saveItemWithImage(item, image).block();
 
-        assertNotNull(actualItem, "Изображение должно быть");
-        assertEquals("description", actualItem.getDescription(), "Описание должно быть description");
+        assertNotNull(actualItemId, "ID товара должен быть");
     }
 }

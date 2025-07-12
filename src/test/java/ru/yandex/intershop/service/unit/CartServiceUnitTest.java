@@ -2,35 +2,42 @@ package ru.yandex.intershop.service.unit;
 
 
 import org.junit.jupiter.api.Test;
-import org.mockito.InjectMocks;
-import org.mockito.Mock;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.TestPropertySource;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
+import reactor.core.publisher.Flux;
+import reactor.core.publisher.Mono;
 import ru.yandex.intershop.model.Action;
 import ru.yandex.intershop.model.cart.Cart;
 import ru.yandex.intershop.model.cart.CartItem;
-import ru.yandex.intershop.model.image.Image;
 import ru.yandex.intershop.model.item.Item;
+import ru.yandex.intershop.repository.CartItemRepository;
 import ru.yandex.intershop.repository.CartRepository;
 import ru.yandex.intershop.service.CartService;
 import ru.yandex.intershop.service.ItemService;
 
-import java.util.ArrayList;
 import java.util.List;
-import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.mockito.Mockito.*;
 
 @SpringBootTest
 @TestPropertySource(locations = "classpath:application-test.properties")
 public class CartServiceUnitTest {
 
-    @InjectMocks
+    @Autowired
     private CartService cartService;
 
-    @Mock
+    @MockitoBean
     private CartRepository cartRepository;
+
+    @MockitoBean
+    private CartItemRepository cartItemRepository;
+
+    @MockitoBean
+    private ItemService itemService;
 
 
     @Test
@@ -39,16 +46,16 @@ public class CartServiceUnitTest {
         Item item = new Item(1L, "title", "description", 12.0);
         Cart cart = new Cart(1L, 1.0, null);
         List<CartItem> cartItems = List.of(
-                new CartItem(1L, cart, item, 1)
+                new CartItem(1L, cart.getId(), item.getId(), 1, item)
         );
         cart.setCartItems(cartItems);
-        doReturn(Optional.of(cart)).when(cartRepository).findById(1L);
-
-        cartService.modifyItemCountByItemId(1L, Action.PLUS);
-
-        doReturn(cart).when(cartRepository).save(cart);
-
-        cartService.modifyItemCountByItemId(1L, Action.PLUS);
+        when(cartRepository.findById(1L)).thenReturn(Mono.just(cart));
+        when(cartItemRepository.findAllByCartId(1L)).thenReturn(Flux.fromIterable(cartItems));
+        when(itemService.findAll()).thenReturn(Flux.fromIterable(List.of(item)));
+        when(itemService.findItemById(1L)).thenReturn(Mono.just(item));
+        when(cartItemRepository.save(any(CartItem.class))).thenReturn(Mono.just(cartItems.get(0)));
+        when(cartRepository.save(any(Cart.class))).thenReturn(Mono.just(cart));
+        cartService.modifyItemCountByItemId(1L, Action.PLUS).block();
     }
 
     @Test
@@ -57,15 +64,17 @@ public class CartServiceUnitTest {
         Item item = new Item(1L, "title", "description", 12.0);
         Cart cart = new Cart(1L, 1.0, null);
         List<CartItem> cartItems = List.of(
-                new CartItem(1L, cart, item, 1)
+                new CartItem(1L, cart.getId(), item.getId(), 1, item)
         );
         cart.setCartItems(cartItems);
-        doReturn(Optional.of(cart)).when(cartRepository).findById(1L);
+        when(cartRepository.findById(1L)).thenReturn(Mono.just(cart));
+        when(cartItemRepository.findAllByCartId(1L)).thenReturn(Flux.fromIterable(cartItems));
+        when(itemService.findAll()).thenReturn(Flux.fromIterable(List.of(item)));
+        Cart cart1 = cartService.findCartWithCartItemsById(1L).block();
 
-        List<CartItem> itemsFromCart = cartService.getItemsFromCart();
-
-        assertEquals(cartItems.size(), itemsFromCart.size(), "Размеры должны совпадать");
-        assertEquals(cartItems.get(0), itemsFromCart.get(0), "Товары должны совпадать");
+        assertNotNull(cart1);
+        assertEquals(cartItems.size(), cart1.getCartItems().size(), "Размеры должны совпадать");
+        assertEquals(cartItems.get(0), cart1.getCartItems().get(0), "Товары должны совпадать");
     }
 
     @Test
@@ -73,15 +82,15 @@ public class CartServiceUnitTest {
 
         Item item = new Item(1L, "title", "description", 12.0);
         Cart cart = new Cart(1L, 1.0, null);
-        List<CartItem> cartItems = new ArrayList<>(List.of(
-                new CartItem(1L, cart, item, 1)
-        ));
+        List<CartItem> cartItems = List.of(
+                new CartItem(1L, cart.getId(), item.getId(), 1, item)
+        );
         cart.setCartItems(cartItems);
-        doReturn(Optional.of(cart)).when(cartRepository).findById(1L);
+        when(cartRepository.findById(1L)).thenReturn(Mono.just(cart));
+        when(cartItemRepository.deleteAllByCartId(1L)).thenReturn(Mono.empty());
+        when(cartRepository.save(any(Cart.class))).thenReturn(Mono.just(cart));
 
-        doReturn(cart).when(cartRepository).save(cart);
-
-        cartService.removeItemsFromCart();
+        cartService.removeItemsFromCart().block();
     }
 
 }
