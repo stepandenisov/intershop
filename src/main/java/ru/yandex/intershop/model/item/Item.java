@@ -4,10 +4,8 @@ package ru.yandex.intershop.model.item;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
-import lombok.Setter;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.relational.core.mapping.Table;
-import ru.yandex.intershop.model.order.Order;
 
 import java.io.Serializable;
 import java.util.Objects;
