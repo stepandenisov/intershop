@@ -24,18 +24,22 @@ public class OrderService {
 
     private final ItemService itemService;
 
+    private final PaymentService paymentService;
+
     public OrderService(OrderRepository orderRepository,
                         CartService cartService,
                         OrderItemRepository orderItemRepository,
-                        ItemService itemService){
+                        ItemService itemService,
+                        PaymentService paymentService){
         this.orderRepository = orderRepository;
         this.cartService = cartService;
         this.itemService = itemService;
         this.orderItemRepository = orderItemRepository;
+        this.paymentService = paymentService;
     }
 
     public Mono<Order> createOrderByCart(Cart cart){
-        return orderRepository.save(new Order(null, cart.getTotal(), new ArrayList<>()))
+        return paymentService.buy().then(orderRepository.save(new Order(null, cart.getTotal(), new ArrayList<>()))
                 .flatMap(savedOrder -> {
                     List<OrderItem> orderItems = cart.getCartItems().stream()
                             .map(cartItem -> new OrderItem(null,
@@ -47,7 +51,7 @@ public class OrderService {
                     return orderItemRepository.saveAll(orderItems)
                             .then(cartService.removeItemsFromCart())
                             .then(Mono.just(savedOrder));
-                });
+                }));
     }
 
     public Mono<Order> findOrderById(Long id){

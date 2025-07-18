@@ -1,0 +1,96 @@
+openapi: 3.0.3
+info:
+  title: Сервис Платежей
+  description: RESTful API сервиса платежей. Позволяет проверять баланс и осуществлять платежи.
+  version: 1.0.0
+
+servers:
+  - url: http://localhost:8081
+    description: Локальный сервер
+
+paths:
+  /balance:
+    get:
+      summary: Получение баланса на счёте
+      description: Возвращает текущий баланс пользователя. Используется для определения доступности оформления заказа.
+      responses:
+        '200':
+          description: Баланс успешно получен
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BalanceResponse'
+        '503':
+          description: Сервис недоступен
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /payment:
+    post:
+      summary: Проведение платежа
+      description: Осуществляет вычитание суммы заказа из баланса. Возвращает результат платежа.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PaymentRequest'
+      responses:
+        '200':
+          description: Платёж успешно выполнен
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaymentResponse'
+        '400':
+          description: Недостаточно средств для оплаты
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaymentResponse'
+        '503':
+          description: Сервис недоступен
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+components:
+  schemas:
+    BalanceResponse:
+      type: object
+      properties:
+        balance:
+          type: number
+          format: float
+          example: 12.5
+    PaymentRequest:
+      type: object
+      required:
+        - amount
+      properties:
+        amount:
+          type: number
+          format: float
+          example: 6.3
+    PaymentResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: true
+        remainingBalance:
+          type: number
+          format: float
+          example: 6.3
+        error:
+          type: string
+          example: Недостаточно средств для оплаты
+    ErrorResponse:
+      type: object
+      properties:
+        error:
+          type: string
+          example: Сервис платежей временно недоступен
