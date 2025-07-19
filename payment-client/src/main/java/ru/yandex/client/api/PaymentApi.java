@@ -18,15 +18,15 @@ import java.util.List;
 import java.util.Map;
 
 @jakarta.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen", date = "2025-07-19T20:37:53.441780+04:00[Europe/Samara]", comments = "Generator version: 7.12.0")
-public class DefaultApi {
+public class PaymentApi {
     private ApiClient apiClient;
 
-    public DefaultApi() {
+    public PaymentApi() {
         this(new ApiClient());
     }
 
     @Autowired
-    public DefaultApi(ApiClient apiClient) {
+    public PaymentApi(ApiClient apiClient) {
         this.apiClient = apiClient;
     }
 
@@ -66,7 +66,6 @@ public class DefaultApi {
 
         String[] localVarAuthNames = new String[] {  };
 
-        System.out.println("HERE2");
         ParameterizedTypeReference<BalanceResponse> localVarReturnType = new ParameterizedTypeReference<BalanceResponse>() {};
         return apiClient.invokeAPI("/balance", HttpMethod.GET, pathParams, queryParams, postBody, headerParams, cookieParams, formParams, localVarAccept, localVarContentType, localVarAuthNames, localVarReturnType);
     }
@@ -80,7 +79,6 @@ public class DefaultApi {
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
     public Mono<BalanceResponse> balanceGet() throws WebClientResponseException {
-        System.out.println("HERE");
         ParameterizedTypeReference<BalanceResponse> localVarReturnType = new ParameterizedTypeReference<BalanceResponse>() {};
         return balanceGetRequestCreation().bodyToMono(localVarReturnType);
     }
