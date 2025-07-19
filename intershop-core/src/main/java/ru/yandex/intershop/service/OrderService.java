@@ -39,7 +39,9 @@ public class OrderService {
     }
 
     public Mono<Order> createOrderByCart(Cart cart){
-        return paymentService.buy().then(orderRepository.save(new Order(null, cart.getTotal(), new ArrayList<>()))
+        return paymentService.buy(cart.getTotal().floatValue())
+                .filter(isSuccess -> isSuccess)
+                .flatMap(isSuccess -> orderRepository.save(new Order(null, cart.getTotal(), new ArrayList<>()))
                 .flatMap(savedOrder -> {
                     List<OrderItem> orderItems = cart.getCartItems().stream()
                             .map(cartItem -> new OrderItem(null,

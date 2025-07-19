@@ -5,34 +5,37 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.client.WebClient;
 import reactor.core.publisher.Mono;
 import ru.yandex.client.ApiClient;
-import ru.yandex.client.api.DefaultApi;
-import ru.yandex.client.model.BalanceResponse;
-
-import java.util.concurrent.ExecutionException;
+import ru.yandex.client.api.PaymentApi;
+import ru.yandex.client.model.PaymentRequest;
+import ru.yandex.intershop.exception.NotEnoughBalanceException;
+import ru.yandex.intershop.exception.PaymentServiceUnavailableException;
 
 @Service
 public class PaymentService {
 
-    private final DefaultApi defaultApi;
+    private final PaymentApi paymentApi;
 
     public PaymentService() {
-        System.out.println("HERE4");
-        WebClient webClient = WebClient.builder()
-                .baseUrl("http://localhost:8081")
-                .filter((request, next) -> {
-                    System.out.println("Sending: " + request.method() + " " + request.url());
-                    return next.exchange(request);
-                })
-                .build();
-
-        ApiClient apiClient = new ApiClient(webClient);
-        this.defaultApi = new DefaultApi(apiClient);
+        this.paymentApi = new PaymentApi();
     }
 
-    public Mono<Void> buy() {
-        return defaultApi.balanceGet()
-                .doOnNext(balanceResponse -> System.out.println(balanceResponse.getBalance()))
-                .then();
+    public Mono<Boolean> checkBalanceIsEnough(float amount){
+        return paymentApi.balanceGet()
+                .flatMap(balanceResponse -> Mono.just(balanceResponse.getBalance() >= amount))
+                .onErrorReturn(false);
+    }
+
+    public Mono<Boolean> buy(float amount) {
+        PaymentRequest paymentRequest = new PaymentRequest();
+        paymentRequest.setAmount(amount);
+        return paymentApi.paymentPost(paymentRequest)
+                .flatMap(paymentResponse -> Mono.just(paymentResponse.getSuccess()))
+                .onErrorMap(error -> {
+                    if (error.getMessage().contains("Bad Request")){
+                        return new NotEnoughBalanceException("Недостаточно средств");
+                    }
+                    return new PaymentServiceUnavailableException("Платежный сервис недоступен");
+                });
     }
 
 }

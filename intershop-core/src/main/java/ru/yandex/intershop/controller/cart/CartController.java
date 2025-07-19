@@ -9,16 +9,20 @@ import ru.yandex.intershop.model.*;
 
 import ru.yandex.intershop.service.CartService;
 import ru.yandex.intershop.service.OrderService;
+import ru.yandex.intershop.service.PaymentService;
 
 @Controller
 @RequestMapping("/cart/items")
 public class CartController {
 
     private final CartService cartService;
+
+    private final PaymentService paymentService;
     private final OrderService orderService;
 
-    public CartController(CartService cartService, OrderService orderService) {
+    public CartController(CartService cartService, PaymentService paymentService, OrderService orderService) {
         this.cartService = cartService;
+        this.paymentService = paymentService;
         this.orderService = orderService;
     }
 
@@ -45,6 +49,7 @@ public class CartController {
                     model.addAttribute("items", cart.getCartItems());
                     model.addAttribute("total", cart.getTotal());
                     model.addAttribute("empty", cart.getCartItems().isEmpty());
+                    model.addAttribute("isEnough", paymentService.checkBalanceIsEnough(cart.getTotal().floatValue()));
                     return Mono.just("cart");
                 });
     }

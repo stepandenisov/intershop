@@ -30,10 +30,13 @@
                         <b th:text="${cartItem.getItem().getPrice()}+' руб.'"></b>
                     </td>
                 </tr>
-                <tr><td th:text="${cartItem.getItem().getDescription()}"></td></tr>
+                <tr>
+                    <td th:text="${cartItem.getItem().getDescription()}"></td>
+                </tr>
                 <tr>
                     <td>
-                        <form th:action="@{${'/cart/items/'+cartItem.getItem().getId()}(redirectUrl='/cart/items')}" method="POST" enctype="multipart/form-data">
+                        <form th:action="@{${'/cart/items/'+cartItem.getItem().getId()}(redirectUrl='/cart/items')}"
+                              method="POST" enctype="multipart/form-data">
                             <button type="submit" name="action" th:value="MINUS">-</button>
                             <span th:text="${cartItem.getItemCount()}"></span>
                             <button type="submit" name="action" th:value="PLUS">+</button>
@@ -51,9 +54,11 @@
     </tr>
     <tr>
         <td style="text-align:right">
-            <form action="/cart/items/buy" method="post" th:if="${!empty}">
-                <button>Купить</button>
-            </form>
+            <div th:if="${isEnough}">
+                <form action="/cart/items/buy" method="post" th:if="${!empty}">
+                    <button>Купить</button>
+                </form>
+            </div>
         </td>
     </tr>
 </table>

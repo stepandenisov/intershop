@@ -95,7 +95,8 @@ public class CartService {
     }
 
     public Mono<Void> removeItemsFromCart() {
-        return cartItemRepository.deleteAllByCartId(1L);
+        return cartItemRepository.deleteAllByCartId(1L)
+                .then(updateTotalOfCartById(1L));
     }
 
 }
