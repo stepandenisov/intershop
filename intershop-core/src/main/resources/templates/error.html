@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <title>Ошибка</title>
+</head>
+<body>
+<a href="/orders" style="float:right;">
+    <b>ЗАКАЗЫ</b>
+</a>
+<a href="/cart/items" style="float:right;">
+    <b>КОРЗИНА</b>
+</a>
+<a href="/items" style="float:right;">
+    <b>ГЛАВНАЯ</b>
+</a>
+<div class="container">
+    <h1>Произошла ошибка</h1>
+    <p th:text="${message}">Что-то пошло не так.</p>
+</div>
+</body>
+</html>
