@@ -4,6 +4,8 @@ package ru.yandex.intershop.service.unit;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.data.redis.core.ReactiveRedisTemplate;
+import org.springframework.data.redis.core.ReactiveValueOperations;
 import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import reactor.core.publisher.Mono;
@@ -14,6 +16,7 @@ import ru.yandex.intershop.repository.ItemRepository;
 import ru.yandex.intershop.service.ImageService;
 import ru.yandex.intershop.service.ItemService;
 
+import java.util.List;
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -32,10 +35,20 @@ public class ItemServiceUnitTest {
     @MockitoBean
     private ImageService imageService;
 
+    @MockitoBean
+    private ReactiveRedisTemplate<String, ItemDto> itemRedisTemplate;
+
+    @MockitoBean
+    private ReactiveValueOperations<String, ItemDto> itemDtoValueOperations;
+
+
     @Test
     void findItemByIdDto_shouldReturnItemDto(){
         ItemDto itemDto = new ItemDto(1L, "title", "description", 12.0, 1);
         when(itemRepository.findByIdDto(1L)).thenReturn(Mono.just(itemDto));
+        String key = "item:"+1L;
+        when(itemRedisTemplate.opsForValue()).thenReturn(itemDtoValueOperations);
+        when(itemDtoValueOperations.get(key)).thenReturn(Mono.just(itemDto));
 
         Optional<ItemDto> actualItemDto = itemService.findItemByIdDto(1L).blockOptional();
 

@@ -17,6 +17,7 @@ import ru.yandex.intershop.repository.OrderRepository;
 import ru.yandex.intershop.service.CartService;
 import ru.yandex.intershop.service.ItemService;
 import ru.yandex.intershop.service.OrderService;
+import ru.yandex.intershop.service.PaymentService;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -43,6 +44,9 @@ public class OrderServiceUnitTest {
     @MockitoBean
     private OrderItemRepository orderItemRepository;
 
+    @MockitoBean
+    private PaymentService paymentService;
+
     @Test
     void save_shouldSaveAndReturnOrder() {
         Item item = new Item(1L, "title", "description", 1.0);
@@ -59,6 +63,7 @@ public class OrderServiceUnitTest {
         when(orderRepository.save(any(Order.class))).thenReturn(Mono.just(order));
         when(cartService.removeItemsFromCart()).thenReturn(Mono.empty());
         when(orderItemRepository.saveAll(anyIterable())).thenReturn(Flux.fromIterable(orderItems));
+        when(paymentService.buy(1.0F)).thenReturn(Mono.just(true));
         Order savedOrder = orderService.createOrderByCart(cart).block();
 
         assertNotNull(savedOrder, "Заказ должен быть");

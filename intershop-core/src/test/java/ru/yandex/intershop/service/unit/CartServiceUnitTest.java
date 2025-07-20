@@ -55,6 +55,8 @@ public class CartServiceUnitTest {
         when(itemService.findItemById(1L)).thenReturn(Mono.just(item));
         when(cartItemRepository.save(any(CartItem.class))).thenReturn(Mono.just(cartItems.get(0)));
         when(cartRepository.save(any(Cart.class))).thenReturn(Mono.just(cart));
+        when(itemService.flushCacheById(1L)).thenReturn(Mono.empty());
+        when(itemService.flushListCaches()).thenReturn(Mono.empty());
         cartService.modifyItemCountByItemId(1L, Action.PLUS).block();
     }
 
@@ -89,7 +91,7 @@ public class CartServiceUnitTest {
         when(cartRepository.findById(1L)).thenReturn(Mono.just(cart));
         when(cartItemRepository.deleteAllByCartId(1L)).thenReturn(Mono.empty());
         when(cartRepository.save(any(Cart.class))).thenReturn(Mono.just(cart));
-
+        when(cartService.updateTotalOfCartById(1L)).thenReturn(Mono.empty());
         cartService.removeItemsFromCart().block();
     }
 
