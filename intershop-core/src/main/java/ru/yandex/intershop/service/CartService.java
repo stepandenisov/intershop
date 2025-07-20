@@ -79,10 +79,12 @@ public class CartService {
                                 yield cartItemRepository.delete(cartItem);
                             }
                         })
-                ).then(updateTotalOfCartById(1L));
+                ).then(updateTotalOfCartById(1L))
+                .then(itemService.flushCacheById(itemId))
+                .then(itemService.flushListCaches());
     }
 
-    private Mono<Void> updateTotalOfCartById(Long cartId) {
+    public Mono<Void> updateTotalOfCartById(Long cartId) {
         Mono<Cart> cartMono = findCartWithCartItemsById(cartId);
         return cartMono.flatMap(cart -> {
             Double total = cart.getCartItems().stream()

@@ -1,6 +1,7 @@
 package ru.yandex.intershop.service;
 
 
+import lombok.AllArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.client.WebClient;
 import reactor.core.publisher.Mono;
@@ -15,14 +16,14 @@ public class PaymentService {
 
     private final PaymentApi paymentApi;
 
-    public PaymentService() {
-        this.paymentApi = new PaymentApi();
+    public PaymentService(PaymentApi paymentApi) {
+        this.paymentApi = paymentApi;
     }
 
-    public Mono<Boolean> checkBalanceIsEnough(float amount){
+    public Mono<Boolean> isBalanceEnough(float amount){
         return paymentApi.balanceGet()
-                .flatMap(balanceResponse -> Mono.just(balanceResponse.getBalance() >= amount))
-                .onErrorReturn(false);
+                .flatMap(balanceResponse -> Mono.just(balanceResponse.getBalance()>= amount))
+                .onErrorResume(e -> Mono.empty());
     }
 
     public Mono<Boolean> buy(float amount) {
