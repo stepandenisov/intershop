@@ -83,30 +83,6 @@ public class PaymentApi {
         return balanceGetRequestCreation().bodyToMono(localVarReturnType);
     }
 
-    /**
-     * Получение баланса на счёте
-     * Возвращает текущий баланс пользователя. Используется для определения доступности оформления заказа.
-     * <p><b>200</b> - Баланс успешно получен
-     * <p><b>503</b> - Сервис недоступен
-     * @return ResponseEntity&lt;BalanceResponse&gt;
-     * @throws WebClientResponseException if an error occurs while attempting to invoke the API
-     */
-    public Mono<ResponseEntity<BalanceResponse>> balanceGetWithHttpInfo() throws WebClientResponseException {
-        ParameterizedTypeReference<BalanceResponse> localVarReturnType = new ParameterizedTypeReference<BalanceResponse>() {};
-        return balanceGetRequestCreation().toEntity(localVarReturnType);
-    }
-
-    /**
-     * Получение баланса на счёте
-     * Возвращает текущий баланс пользователя. Используется для определения доступности оформления заказа.
-     * <p><b>200</b> - Баланс успешно получен
-     * <p><b>503</b> - Сервис недоступен
-     * @return ResponseSpec
-     * @throws WebClientResponseException if an error occurs while attempting to invoke the API
-     */
-    public ResponseSpec balanceGetWithResponseSpec() throws WebClientResponseException {
-        return balanceGetRequestCreation();
-    }
 
     /**
      * Проведение платежа
@@ -160,34 +136,5 @@ public class PaymentApi {
     public Mono<PaymentResponse> paymentPost(PaymentRequest paymentRequest) throws WebClientResponseException {
         ParameterizedTypeReference<PaymentResponse> localVarReturnType = new ParameterizedTypeReference<PaymentResponse>() {};
         return paymentPostRequestCreation(paymentRequest).bodyToMono(localVarReturnType);
-    }
-
-    /**
-     * Проведение платежа
-     * Осуществляет вычитание суммы заказа из баланса. Возвращает результат платежа.
-     * <p><b>200</b> - Платёж успешно выполнен
-     * <p><b>400</b> - Недостаточно средств для оплаты
-     * <p><b>503</b> - Сервис недоступен
-     * @param paymentRequest The paymentRequest parameter
-     * @return ResponseEntity&lt;PaymentResponse&gt;
-     * @throws WebClientResponseException if an error occurs while attempting to invoke the API
-     */
-    public Mono<ResponseEntity<PaymentResponse>> paymentPostWithHttpInfo(PaymentRequest paymentRequest) throws WebClientResponseException {
-        ParameterizedTypeReference<PaymentResponse> localVarReturnType = new ParameterizedTypeReference<PaymentResponse>() {};
-        return paymentPostRequestCreation(paymentRequest).toEntity(localVarReturnType);
-    }
-
-    /**
-     * Проведение платежа
-     * Осуществляет вычитание суммы заказа из баланса. Возвращает результат платежа.
-     * <p><b>200</b> - Платёж успешно выполнен
-     * <p><b>400</b> - Недостаточно средств для оплаты
-     * <p><b>503</b> - Сервис недоступен
-     * @param paymentRequest The paymentRequest parameter
-     * @return ResponseSpec
-     * @throws WebClientResponseException if an error occurs while attempting to invoke the API
-     */
-    public ResponseSpec paymentPostWithResponseSpec(PaymentRequest paymentRequest) throws WebClientResponseException {
-        return paymentPostRequestCreation(paymentRequest);
     }
 }
