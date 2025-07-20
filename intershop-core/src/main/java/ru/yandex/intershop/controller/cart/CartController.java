@@ -11,6 +11,9 @@ import ru.yandex.intershop.service.CartService;
 import ru.yandex.intershop.service.OrderService;
 import ru.yandex.intershop.service.PaymentService;
 
+import java.util.List;
+import java.util.Objects;
+
 @Controller
 @RequestMapping("/cart/items")
 public class CartController {
@@ -45,24 +48,31 @@ public class CartController {
     @GetMapping(value = {"", "/"})
     public Mono<String> cart(Model model) {
         return cartService.findCartWithCartItemsById(1L)
+                .filter(Objects::nonNull)
                 .flatMap(cart -> {
                     model.addAttribute("items", cart.getCartItems());
                     model.addAttribute("total", cart.getTotal());
                     model.addAttribute("empty", cart.getCartItems().isEmpty());
-                    return Mono.just(cart);
-                })
-                .flatMap(cart ->
-                        paymentService.isBalanceEnough(cart.getTotal().floatValue())
-                ).flatMap(isEnough -> {
-                    model.addAttribute("isEnough", isEnough);
-                    model.addAttribute("isUnavailable", false);
-                    return Mono.just("cart");
+                    return paymentService.isBalanceEnough(cart.getTotal().floatValue())
+                            .flatMap(isEnough -> {
+                                model.addAttribute("isEnough", isEnough);
+                                model.addAttribute("isUnavailable", false);
+                                return Mono.just("cart");
+                            })
+                            .switchIfEmpty(Mono.defer(() -> {
+                                model.addAttribute("isEnough", false);
+                                model.addAttribute("isUnavailable", true);
+                                return Mono.just("cart");
+                            }));
                 })
                 .switchIfEmpty(Mono.defer(() -> {
+                    model.addAttribute("items", List.of());
+                    model.addAttribute("total", 0.0);
+                    model.addAttribute("empty", true);
                     model.addAttribute("isEnough", false);
                     model.addAttribute("isUnavailable", true);
                     return Mono.just("cart");
                 }));
     }
 
-}
+    }

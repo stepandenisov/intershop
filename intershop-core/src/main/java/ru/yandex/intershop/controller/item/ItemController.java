@@ -14,6 +14,8 @@ import ru.yandex.intershop.model.image.Image;
 import ru.yandex.intershop.model.item.Item;
 import ru.yandex.intershop.service.ItemService;
 
+import java.util.Objects;
+
 @Controller
 @RequestMapping("/items")
 public class ItemController {
@@ -49,10 +51,12 @@ public class ItemController {
     @GetMapping("/{id}")
     public Mono<String> item(@PathVariable Long id, Model model) {
         return itemService.findItemByIdDto(id)
+                .filter(Objects::nonNull)
                 .flatMap(item -> {
                     model.addAttribute("item", item);
                     return Mono.just("item");
-                });
+                })
+                .switchIfEmpty(Mono.just("redirect:/items"));
     }
 
     @GetMapping(value = {"/", ""})

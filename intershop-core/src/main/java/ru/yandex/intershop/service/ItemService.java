@@ -45,14 +45,16 @@ public class ItemService {
     public Mono<ItemDto> findItemByIdDto(Long id) {
         return itemRedisTemplate.opsForValue().get(ITEM_CACHE_KEY + id)
                 .switchIfEmpty(itemRepository.findByIdDto(id)
+                        .filter(Objects::nonNull)
                         .flatMap(itemDto -> itemRedisTemplate.opsForValue().set(ITEM_CACHE_KEY + id, itemDto, Duration.ofMinutes(1))
-                                .then(Mono.just(itemDto))));
+                                .thenReturn(itemDto)));
     }
 
     public Mono<Void> flushCacheById(Long id) {
-        return itemRedisTemplate.opsForValue().delete(ITEM_CACHE_KEY+id)
+        return itemRedisTemplate.opsForValue().delete(ITEM_CACHE_KEY + id)
                 .then();
     }
+
     public Mono<Void> flushListCaches() {
         return itemListRedisTemplate.scan()
                 .filter(key -> key.startsWith(ITEM_LIST_CACHE_KEY))
