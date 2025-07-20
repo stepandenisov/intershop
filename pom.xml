@@ -17,6 +17,8 @@
     <packaging>pom</packaging>
 
     <modules>
+        <module>payment-client</module>
+        <module>payment</module>
         <module>intershop-core</module>
     </modules>
 
