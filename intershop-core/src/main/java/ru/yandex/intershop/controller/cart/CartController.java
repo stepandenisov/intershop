@@ -27,8 +27,8 @@ public class CartController {
     }
 
     @PostMapping(value = "/{id}", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-    public Mono<String> modifyItemCount(@PathVariable(name="id") Long id,
-                                        @RequestParam(name="redirectUrl") String redirectUrl,
+    public Mono<String> modifyItemCount(@PathVariable(name = "id") Long id,
+                                        @RequestParam(name = "redirectUrl") String redirectUrl,
                                         @RequestPart(name = "action") String action
     ) {
         return cartService.modifyItemCountByItemId(id, Action.valueOf(action))
@@ -49,9 +49,20 @@ public class CartController {
                     model.addAttribute("items", cart.getCartItems());
                     model.addAttribute("total", cart.getTotal());
                     model.addAttribute("empty", cart.getCartItems().isEmpty());
-                    model.addAttribute("isEnough", paymentService.checkBalanceIsEnough(cart.getTotal().floatValue()));
+                    return Mono.just(cart);
+                })
+                .flatMap(cart ->
+                        paymentService.isBalanceEnough(cart.getTotal().floatValue())
+                ).flatMap(isEnough -> {
+                    model.addAttribute("isEnough", isEnough);
+                    model.addAttribute("isUnavailable", false);
                     return Mono.just("cart");
-                });
+                })
+                .switchIfEmpty(Mono.defer(() -> {
+                    model.addAttribute("isEnough", false);
+                    model.addAttribute("isUnavailable", true);
+                    return Mono.just("cart");
+                }));
     }
 
 }
