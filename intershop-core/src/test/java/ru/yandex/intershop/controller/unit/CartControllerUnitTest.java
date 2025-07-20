@@ -19,6 +19,7 @@ import ru.yandex.intershop.model.order.Order;
 import ru.yandex.intershop.model.order.OrderItem;
 import ru.yandex.intershop.service.CartService;
 import ru.yandex.intershop.service.OrderService;
+import ru.yandex.intershop.service.PaymentService;
 
 import java.util.List;
 
@@ -38,6 +39,9 @@ public class CartControllerUnitTest {
     @MockitoBean
     private OrderService orderService;
 
+    @MockitoBean
+    private PaymentService paymentService;
+
     @Test
     void cart_shouldReturnHtmlWithCart() {
 
@@ -47,6 +51,8 @@ public class CartControllerUnitTest {
         cart.setCartItems(List.of(cartItem));
         when(cartService.findCartWithCartItemsById(1L))
                 .thenReturn(Mono.just(cart));
+
+        when(paymentService.isBalanceEnough(1.0F)).thenReturn(Mono.just(true));
 
         webTestClient.get()
                 .uri("/cart/items")
