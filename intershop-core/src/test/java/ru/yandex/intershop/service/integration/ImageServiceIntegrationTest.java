@@ -2,8 +2,10 @@ package ru.yandex.intershop.service.integration;
 
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.redis.core.ReactiveRedisTemplate;
 import ru.yandex.intershop.model.image.Image;
 import ru.yandex.intershop.model.item.Item;
+import ru.yandex.intershop.model.item.ItemDto;
 import ru.yandex.intershop.service.ImageService;
 
 import java.util.Optional;
@@ -17,6 +19,11 @@ public class ImageServiceIntegrationTest extends BaseServiceIntegrationTest{
 
     @Autowired
     private ImageService imageRepository;
+
+    @Autowired
+    private ReactiveRedisTemplate<String, Image> imageReactiveRedisTemplate;
+
+    private static final String IMAGE_CACHE_KEY = "image:";
 
     private Long itemId;
 
@@ -33,6 +40,9 @@ public class ImageServiceIntegrationTest extends BaseServiceIntegrationTest{
 
         Optional<Image> actualImage = imageService.getImageByItemId(itemId).blockOptional();
         assertTrue(actualImage.isPresent(), "Изображение должно быть");
+        Image cachedImage = imageReactiveRedisTemplate.opsForValue().get(IMAGE_CACHE_KEY+actualImage.get().getItemId()).block();
+        assertNotNull(cachedImage, "Изображение должно быть");
+        assertEquals(actualImage.get().getId(), cachedImage.getId(), "Id должны совпадать");
         assertEquals(itemId, actualImage.get().getItemId(), "id товара должен быть " + itemId);
     }
 

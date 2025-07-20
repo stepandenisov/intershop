@@ -2,6 +2,7 @@ package ru.yandex.intershop.service.integration;
 
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import reactor.core.publisher.Mono;
 import ru.yandex.intershop.model.cart.Cart;
 import ru.yandex.intershop.model.cart.CartItem;
@@ -9,13 +10,17 @@ import ru.yandex.intershop.model.item.Item;
 import ru.yandex.intershop.model.order.Order;
 import ru.yandex.intershop.repository.CartItemRepository;
 import ru.yandex.intershop.repository.ItemRepository;
+import ru.yandex.intershop.repository.OrderRepository;
 import ru.yandex.intershop.service.OrderService;
+import ru.yandex.intershop.service.PaymentService;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.when;
 
 public class OrderServiceIntegrationTest extends BaseServiceIntegrationTest{
 
@@ -34,6 +39,7 @@ public class OrderServiceIntegrationTest extends BaseServiceIntegrationTest{
     void saveAndFindById_shouldSaveAndReturnOrder(){
         Mono<Item> itemMono = itemRepository.save(new Item(null, "title", "description", 1.0));
         Mono<Cart> cartMono = cartRepository.save(new Cart(null, 1.0, new ArrayList<>()));
+        when(paymentService.buy(1.0F)).thenReturn(Mono.just(true));
         Mono.zip(itemMono, cartMono)
                 .flatMap(tuple -> {
                     Cart cart = tuple.getT2();
@@ -57,6 +63,7 @@ public class OrderServiceIntegrationTest extends BaseServiceIntegrationTest{
     void findAll_shouldReturnOrders(){
         Mono<Item> itemMono = itemRepository.save(new Item(null, "title", "description", 1.0));
         Mono<Cart> cartMono = cartRepository.save(new Cart(null, 1.0, new ArrayList<>()));
+        when(paymentService.buy(1.0F)).thenReturn(Mono.just(true));
         Mono.zip(itemMono, cartMono)
                 .flatMap(tuple -> {
                     Cart cart = tuple.getT2();
