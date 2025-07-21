@@ -1,0 +1,27 @@
+version: "3.8"
+
+services:
+  redis:
+    image: redis:7.2.4-bookworm
+    ports:
+      - "6379:6379"
+
+  intershop-core:
+    build:
+      context: .
+      dockerfile: intershop-core/Dockerfile
+    ports:
+      - "8080:8080"
+    depends_on:
+      - payment
+      - redis
+    environment:
+      - SPRING_REDIS_HOST=redis
+      - PAYMENT_URL=http://payment:8081
+
+  payment:
+    build:
+      context: .
+      dockerfile: payment/Dockerfile
+    ports:
+      - "8081:8081"
