@@ -25,7 +25,6 @@ public class PaymentApi {
         this(new ApiClient());
     }
 
-    @Autowired
     public PaymentApi(ApiClient apiClient) {
         this.apiClient = apiClient;
     }
