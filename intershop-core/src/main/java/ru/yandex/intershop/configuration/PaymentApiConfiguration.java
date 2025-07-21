@@ -14,7 +14,6 @@ public class PaymentApiConfiguration {
 
     @Bean
     public ApiClient paymentApiClient() {
-        System.out.println("\n\n\n\n" + baseUrl+"\n\n\n");
         return new ApiClient(baseUrl);
     }
 

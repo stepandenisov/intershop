@@ -20,7 +20,7 @@ public class ImageController {
 
     @GetMapping("/{itemId}")
     @ResponseBody
-    public Flux<byte[]> getImageByPostId(@PathVariable Long itemId){
+    public Flux<byte[]> getImageByPostId(@PathVariable("itemId") Long itemId){
         return imageService.getImageByItemId(itemId)
                 .flatMapMany(image -> Flux.fromIterable(Arrays.asList(image.getImageBytes())))
                 .switchIfEmpty(Flux.defer(Flux::empty));

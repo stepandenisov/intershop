@@ -49,7 +49,7 @@ public class ItemController {
     }
 
     @GetMapping("/{id}")
-    public Mono<String> item(@PathVariable Long id, Model model) {
+    public Mono<String> item(@PathVariable("id") Long id, Model model) {
         return itemService.findItemByIdDto(id)
                 .filter(Objects::nonNull)
                 .flatMap(item -> {

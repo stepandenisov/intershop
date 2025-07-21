@@ -22,8 +22,8 @@ public class OrderController {
     }
 
     @GetMapping("/{id}")
-    public Mono<String> order(@PathVariable Long id,
-                              @RequestParam(required = false, defaultValue = "false") boolean newOrder,
+    public Mono<String> order(@PathVariable("id") Long id,
+                              @RequestParam(name="newOrder", required = false, defaultValue = "false") boolean newOrder,
                               Model model) {
         return orderService.findOrderById(id)
                 .flatMap(order -> {
