@@ -1,9 +1,11 @@
 package ru.yandex.intershop.controller.item;
 
 
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
 import org.springframework.http.codec.multipart.FilePart;
 import org.springframework.http.codec.multipart.Part;
+import org.springframework.security.web.server.csrf.WebSessionServerCsrfTokenRepository;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
@@ -21,6 +23,9 @@ import java.util.Objects;
 public class ItemController {
 
     private final ItemService itemService;
+
+    @Autowired
+    private WebSessionServerCsrfTokenRepository csrfTokenRepository;
 
     public ItemController(ItemService itemService) {
         this.itemService = itemService;

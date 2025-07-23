@@ -102,17 +102,17 @@ public class ItemService {
                 paging.getPageSize(),
                 Sort.by(sorting.field));
         String key = ITEM_LIST_CACHE_KEY + search + ":" + pageable.getPageNumber() + ":" + pageable.getPageSize() + ":" + pageable.getSort();
+        Flux<ItemDto> searchItems = itemRepository.findAllByTitleStartsWithOrDescriptionStartsWithDtoSortByOffsetLimit(pageable, search)
+                .collectList()
+                .flatMap(items ->
+                        itemListRedisTemplate.opsForValue()
+                                .set(key, items, Duration.ofMinutes(1))
+                                .thenReturn(items))
+                .flatMapMany(Flux::fromIterable);
         return itemListRedisTemplate.opsForValue()
                 .get(key)
                 .flatMapMany(Flux::fromIterable)
-                .switchIfEmpty(itemRepository.findAllByTitleStartsWithOrDescriptionStartsWithDtoSortByOffsetLimit(pageable, search)
-                        .collectList()
-                        .flatMap(items ->
-                                itemListRedisTemplate.opsForValue()
-                                        .set(key, items, Duration.ofMinutes(1))
-                                        .thenReturn(items)
-                        )
-                        .flatMapMany(Flux::fromIterable));
+                .switchIfEmpty(searchItems);
     }
 
     private Flux<ItemDto> findAllPaginated(Paging paging, Sorting sorting) {
@@ -120,17 +120,19 @@ public class ItemService {
                 paging.getPageSize(),
                 Sort.by(sorting.field));
         String key = ITEM_LIST_CACHE_KEY + pageable.getPageNumber() + ":" + pageable.getPageSize() + ":" + pageable.getSort();
+
+        Flux<ItemDto> findItems = itemRepository.findAllDtoSortByOffsetLimit(pageable)
+                .collectList()
+                .flatMap(items ->
+                        itemListRedisTemplate.opsForValue()
+                                .set(key, items, Duration.ofMinutes(1))
+                                .thenReturn(items))
+                .flatMapMany(Flux::fromIterable);
+
         return itemListRedisTemplate.opsForValue()
                 .get(key)
                 .flatMapMany(Flux::fromIterable)
-                .switchIfEmpty(itemRepository.findAllDtoSortByOffsetLimit(pageable)
-                        .collectList()
-                        .flatMap(items ->
-                                itemListRedisTemplate.opsForValue()
-                                        .set(key, items, Duration.ofMinutes(1))
-                                        .thenReturn(items)
-                        )
-                        .flatMapMany(Flux::fromIterable));
+                .switchIfEmpty(findItems);
     }
 
     public Flux<Item> findAll() {

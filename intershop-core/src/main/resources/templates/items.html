@@ -17,6 +17,7 @@
     <tr>
         <td>
             <form>
+                <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}" />
                 <p>
                     <label for="search">Найти: </label>
                     <input id="search" style="width:300px;" name="search" th:value="${search}"/>

@@ -42,3 +42,16 @@ create table if not exists images
     image   bytea not null
 );
 
+CREATE TABLE users
+(
+    id       bigserial primary key,
+    username varchar(255) not null unique,
+    password varchar(255) not null,
+    roles    text       not null
+);
+
+insert into users (username, password, roles)
+values ('admin',
+        '{bcrypt}$2a$10$NbGLod52zPCH.Hb2m0W0yOihG0.mgNU//jaQwSPWC9oYubgRmwGN6', -- пароль: 'password'
+        'USER,ADMIN');
+
