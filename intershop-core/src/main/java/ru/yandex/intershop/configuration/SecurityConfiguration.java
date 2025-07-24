@@ -11,17 +11,19 @@ import org.springframework.security.config.web.server.ServerHttpSecurity;
 import org.springframework.security.core.userdetails.ReactiveUserDetailsService;
 import org.springframework.security.crypto.factory.PasswordEncoderFactories;
 import org.springframework.security.crypto.password.PasswordEncoder;
-import org.springframework.security.web.csrf.CsrfTokenRepository;
 import org.springframework.security.web.server.SecurityWebFilterChain;
 import org.springframework.security.web.server.authentication.AuthenticationWebFilter;
 import org.springframework.security.web.server.authentication.ServerHttpBasicAuthenticationConverter;
+import org.springframework.security.web.server.authentication.logout.RedirectServerLogoutSuccessHandler;
+import org.springframework.security.web.server.authentication.logout.SecurityContextServerLogoutHandler;
 import org.springframework.security.web.server.context.ServerSecurityContextRepository;
 import org.springframework.security.web.server.context.WebSessionServerSecurityContextRepository;
-import org.springframework.security.web.server.csrf.CookieServerCsrfTokenRepository;
 import org.springframework.security.web.server.csrf.WebSessionServerCsrfTokenRepository;
 import org.springframework.security.web.server.csrf.XorServerCsrfTokenRequestAttributeHandler;
 import ru.yandex.intershop.repository.UserRepository;
-import ru.yandex.intershop.service.H2ReactiveUserDetailsService;
+import ru.yandex.intershop.service.auth.H2ReactiveUserDetailsService;
+
+import java.net.URI;
 
 @Configuration
 @EnableWebFluxSecurity
@@ -43,7 +45,7 @@ public class SecurityConfiguration {
     }
 
     @Bean
-    public WebSessionServerCsrfTokenRepository webSessionServerCsrfTokenRepository(){
+    public WebSessionServerCsrfTokenRepository webSessionServerCsrfTokenRepository() {
         WebSessionServerCsrfTokenRepository csrfTokenRepository = new WebSessionServerCsrfTokenRepository();
         csrfTokenRepository.setSessionAttributeName("_csrf");
         return csrfTokenRepository;
@@ -58,20 +60,26 @@ public class SecurityConfiguration {
         ServerSecurityContextRepository contextRepository = new WebSessionServerSecurityContextRepository();
         authFilter.setSecurityContextRepository(contextRepository);
 
-        var csrfHandler = new XorServerCsrfTokenRequestAttributeHandler();
+        XorServerCsrfTokenRequestAttributeHandler csrfHandler = new XorServerCsrfTokenRequestAttributeHandler();
         csrfHandler.setTokenFromMultipartDataEnabled(true);
+
+        RedirectServerLogoutSuccessHandler logoutSuccessHandler = new RedirectServerLogoutSuccessHandler();
+        logoutSuccessHandler.setLogoutSuccessUrl(URI.create("/items"));
 
         return http
                 .addFilterAt(authFilter, SecurityWebFiltersOrder.AUTHENTICATION)
                 .formLogin(form -> form
                         .loginPage("/login")
                 )
-                .logout(logout -> logout
-                        .logoutUrl("/logout")
-                )
+                .logout(logout ->
+                        logout.logoutUrl("/logout")
+                                .logoutHandler(new SecurityContextServerLogoutHandler())
+                                .logoutSuccessHandler(logoutSuccessHandler))
                 .authorizeExchange(exchanges -> exchanges
-                        .pathMatchers("/login", "/logout").permitAll()
-                        .anyExchange().permitAll()
+                        .pathMatchers(HttpMethod.POST, "/items").hasRole("ADMIN")
+                        .pathMatchers("/items/add").hasRole("ADMIN")
+                        .pathMatchers("/images/*","/items", "/items/*", "/login", "/logout").permitAll()
+                        .anyExchange().authenticated()
                 )
                 .securityContextRepository(contextRepository)
                 .csrf(csrf -> csrf

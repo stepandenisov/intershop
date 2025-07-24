@@ -1,4 +1,4 @@
-package ru.yandex.intershop.service;
+package ru.yandex.intershop.service.auth;
 
 import org.springframework.security.core.userdetails.ReactiveUserDetailsService;
 import org.springframework.security.core.userdetails.UserDetails;
