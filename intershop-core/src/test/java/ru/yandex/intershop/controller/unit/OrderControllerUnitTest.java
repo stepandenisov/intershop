@@ -4,6 +4,7 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.reactive.WebFluxTest;
 import org.springframework.http.MediaType;
+import org.springframework.security.test.context.support.WithAnonymousUser;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.reactive.server.WebTestClient;
@@ -20,6 +21,7 @@ import java.util.List;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.*;
+import static org.springframework.security.test.web.reactive.server.SecurityMockServerConfigurers.csrf;
 
 @WebFluxTest(OrderController.class)
 public class OrderControllerUnitTest {
@@ -58,6 +60,16 @@ public class OrderControllerUnitTest {
                 });
     }
 
+    @WithAnonymousUser
+    void order_shouldRedirect() {
+        webTestClient
+                .mutateWith(csrf())
+                .post()
+                .uri("/orders/1")
+                .exchange()
+                .expectStatus().is3xxRedirection();
+    }
+
     @Test
     @WithMockUser(username = "admin",
             roles = {"ADMIN"})
@@ -79,6 +91,16 @@ public class OrderControllerUnitTest {
                     assertNotNull(body);
                     assertTrue(body.contains("1.0 руб."));
                 });
+    }
+
+    @WithAnonymousUser
+    void orders_shouldRedirect() {
+        webTestClient
+                .mutateWith(csrf())
+                .post()
+                .uri("/orders")
+                .exchange()
+                .expectStatus().is3xxRedirection();
     }
 
 }

@@ -6,6 +6,7 @@ import org.springframework.boot.test.autoconfigure.web.reactive.WebFluxTest;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.http.client.MultipartBodyBuilder;
+import org.springframework.security.test.context.support.WithAnonymousUser;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.reactive.server.WebTestClient;
@@ -79,6 +80,15 @@ public class CartControllerUnitTest {
     }
 
     @Test
+    @WithAnonymousUser
+    void cart_shouldRedirect() {
+        webTestClient.get()
+                .uri("/cart/items")
+                .exchange()
+                .expectStatus().is3xxRedirection();
+    }
+
+    @Test
     @WithMockUser(username = "admin",
             roles = {"ADMIN"})
     void modifyItemCount_shouldModifyCountAndRedirect() {
@@ -97,6 +107,17 @@ public class CartControllerUnitTest {
                 .exchange()
                 .expectStatus().is3xxRedirection()
                 .expectHeader().valueEquals(HttpHeaders.LOCATION, "/cart/items/");
+    }
+
+    @Test
+    @WithAnonymousUser
+    void modifyItemCount_shouldRedirect() {
+        webTestClient
+                .mutateWith(csrf())
+                .post()
+                .uri("/cart/items/1?redirectUrl=/cart/items/")
+                .exchange()
+                .expectStatus().is3xxRedirection();
     }
 
     @Test
@@ -127,5 +148,16 @@ public class CartControllerUnitTest {
                 .exchange()
                 .expectStatus().is3xxRedirection()
                 .expectHeader().valueEquals(HttpHeaders.LOCATION, "/orders/1?newOrder=true");
+    }
+
+    @Test
+    @WithAnonymousUser
+    void buy_shouldRedirect() {
+        webTestClient
+                .mutateWith(csrf())
+                .post()
+                .uri("/cart/items/buy")
+                .exchange()
+                .expectStatus().is3xxRedirection();
     }
 }

@@ -9,6 +9,7 @@ import org.springframework.core.io.ByteArrayResource;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.http.MediaType;
 import org.springframework.http.client.MultipartBodyBuilder;
+import org.springframework.security.test.context.support.WithAnonymousUser;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.reactive.server.WebTestClient;
@@ -59,6 +60,16 @@ public class ItemControllerUnitTest {
                 .expectHeader().contentType(MediaType.TEXT_HTML);
     }
 
+    @WithAnonymousUser
+    void itemsAdd_shouldRedirect() {
+        webTestClient
+                .mutateWith(csrf())
+                .post()
+                .uri("/items/add")
+                .exchange()
+                .expectStatus().is3xxRedirection();
+    }
+
     @Test
     @WithMockUser(username = "admin",
             authorities = {"ROLE_ADMIN"})
@@ -87,6 +98,16 @@ public class ItemControllerUnitTest {
                 .uri("/items/")
                 .contentType(MediaType.MULTIPART_FORM_DATA)
                 .body(BodyInserters.fromMultipartData(builder.build()))
+                .exchange()
+                .expectStatus().is3xxRedirection();
+    }
+
+    @WithAnonymousUser
+    void items_shouldRedirect() {
+        webTestClient
+                .mutateWith(csrf())
+                .post()
+                .uri("/items/")
                 .exchange()
                 .expectStatus().is3xxRedirection();
     }
