@@ -17,6 +17,7 @@ import ru.yandex.intershop.model.*;
 import ru.yandex.intershop.model.image.Image;
 import ru.yandex.intershop.model.item.Item;
 import ru.yandex.intershop.service.ItemService;
+import ru.yandex.intershop.service.UserService;
 import ru.yandex.intershop.service.auth.AuthService;
 
 import java.util.Objects;
@@ -29,9 +30,12 @@ public class ItemController {
 
     private final AuthService authService;
 
-    public ItemController(ItemService itemService, AuthService authService) {
+    private final UserService userService;
+
+    public ItemController(ItemService itemService, AuthService authService, UserService userService) {
         this.itemService = itemService;
         this.authService = authService;
+        this.userService = userService;
     }
 
     @GetMapping("/add")
@@ -58,14 +62,20 @@ public class ItemController {
 
     @GetMapping("/{id}")
     public Mono<String> item(@PathVariable("id") Long id, Model model, ServerWebExchange exchange) {
-        return itemService.findItemByIdDto(id)
-                .filter(Objects::nonNull)
-                .flatMap(item -> {
-                    model.addAttribute("isAuthenticated", authService.isAuthenticated(exchange));
-                    model.addAttribute("item", item);
-                    return Mono.just("item");
-                })
-                .switchIfEmpty(Mono.just("redirect:/items"));
+        return exchange.getPrincipal()
+                .flatMap(principal -> userService.findUserByName(principal.getName())
+                        .filter(Objects::nonNull)
+                        .flatMap(user -> Mono.just(user.getId()))
+                        .switchIfEmpty(Mono.just(-1L)))
+                .switchIfEmpty(Mono.just(-1L))
+                .flatMap(userId -> itemService.findItemByIdDto(id, userId)
+                        .filter(Objects::nonNull)
+                        .flatMap(item -> {
+                            model.addAttribute("isAuthenticated", authService.isAuthenticated(exchange));
+                            model.addAttribute("item", item);
+                            return Mono.just("item");
+                        })
+                        .switchIfEmpty(Mono.just("redirect:/items")));
     }
 
     @GetMapping(value = {"/", ""})
@@ -75,14 +85,20 @@ public class ItemController {
                               @RequestParam(name = "pageNumber", required = false, defaultValue = "1") String pageNumber,
                               Model model, ServerWebExchange exchange) {
         Paging paging = new Paging(Integer.parseInt(pageNumber), Integer.parseInt(pageSize), false, false);
-        return itemService.searchPaginatedAndSorted(search, paging, Sorting.valueOf(sort))
-                .flatMap(items -> {
-                    model.addAttribute("isAuthenticated", authService.isAuthenticated(exchange));
-                    model.addAttribute("items", items);
-                    model.addAttribute("search", search);
-                    model.addAttribute("sort", sort);
-                    model.addAttribute("paging", paging);
-                    return Mono.just("items");
-                });
+        return exchange.getPrincipal()
+                .flatMap(principal -> userService.findUserByName(principal.getName())
+                        .filter(Objects::nonNull)
+                        .flatMap(user -> Mono.just(user.getId()))
+                        .switchIfEmpty(Mono.just(-1L)))
+                .switchIfEmpty(Mono.just(-1L))
+                .flatMap(userId -> itemService.searchPaginatedAndSortedForUserById(search, paging, Sorting.valueOf(sort), userId)
+                        .flatMap(items -> {
+                            model.addAttribute("isAuthenticated", authService.isAuthenticated(exchange));
+                            model.addAttribute("items", items);
+                            model.addAttribute("search", search);
+                            model.addAttribute("sort", sort);
+                            model.addAttribute("paging", paging);
+                            return Mono.just("items");
+                        }));
     }
 }

@@ -42,22 +42,22 @@ public class ItemService {
         this.itemRedisTemplate = itemRedisTemplate;
     }
 
-    public Mono<ItemDto> findItemByIdDto(Long id) {
-        return itemRedisTemplate.opsForValue().get(ITEM_CACHE_KEY + id)
-                .switchIfEmpty(itemRepository.findByIdDto(id)
+    public Mono<ItemDto> findItemByIdDto(Long id, Long userId) {
+        return itemRedisTemplate.opsForValue().get(ITEM_CACHE_KEY + userId + ":" + id)
+                .switchIfEmpty(itemRepository.findByIdDtoJoinCountOnUserId(id, userId)
                         .filter(Objects::nonNull)
                         .flatMap(itemDto -> itemRedisTemplate.opsForValue().set(ITEM_CACHE_KEY + id, itemDto, Duration.ofMinutes(1))
                                 .thenReturn(itemDto)));
     }
 
-    public Mono<Void> flushCacheById(Long id) {
-        return itemRedisTemplate.opsForValue().delete(ITEM_CACHE_KEY + id)
+    public Mono<Void> flushCacheByUserId(Long userId) {
+        return itemRedisTemplate.opsForValue().delete(ITEM_CACHE_KEY + userId)
                 .then();
     }
 
-    public Mono<Void> flushListCaches() {
+    public Mono<Void> flushListCachesByUserId(Long userId) {
         return itemListRedisTemplate.scan()
-                .filter(key -> key.startsWith(ITEM_LIST_CACHE_KEY))
+                .filter(key -> key.startsWith(ITEM_LIST_CACHE_KEY + userId))
                 .flatMap(itemListRedisTemplate::delete)
                 .then();
     }
@@ -75,8 +75,10 @@ public class ItemService {
                 });
     }
 
-    public Mono<Page<ItemDto>> searchPaginatedAndSorted(String search, Paging paging, Sorting sort) {
-        Flux<ItemDto> items = search.isBlank() ? findAllPaginated(paging, sort) : searchAllPaginated(search, paging, sort);
+    public Mono<Page<ItemDto>> searchPaginatedAndSortedForUserById(String search, Paging paging, Sorting sort, Long userId) {
+        Flux<ItemDto> items = search.isBlank()
+                ? findAllPaginatedForUserById(paging, sort, userId)
+                : searchAllPaginatedForUserById(search, paging, sort, userId);
         Mono<Long> countByCondition = search.isBlank()
                 ? itemRepository.count()
                 : itemRepository.countAllByTitleStartingWithOrDescriptionStartingWith(search, search);
@@ -97,12 +99,12 @@ public class ItemService {
                 .map(p -> new PageImpl<>(p.getT1(), pageRequest, p.getT2()));
     }
 
-    private Flux<ItemDto> searchAllPaginated(String search, Paging paging, Sorting sorting) {
+    private Flux<ItemDto> searchAllPaginatedForUserById(String search, Paging paging, Sorting sorting, Long userId) {
         PageRequest pageable = PageRequest.of(paging.getPageNumber() - 1,
                 paging.getPageSize(),
                 Sort.by(sorting.field));
-        String key = ITEM_LIST_CACHE_KEY + search + ":" + pageable.getPageNumber() + ":" + pageable.getPageSize() + ":" + pageable.getSort();
-        Flux<ItemDto> searchItems = itemRepository.findAllByTitleStartsWithOrDescriptionStartsWithDtoSortByOffsetLimit(pageable, search)
+        String key = ITEM_LIST_CACHE_KEY + userId + ":" + search + ":" + pageable.getPageNumber() + ":" + pageable.getPageSize() + ":" + pageable.getSort();
+        Flux<ItemDto> searchItems = itemRepository.findAllByTitleStartsWithOrDescriptionStartsWithDtoSortByOffsetLimit(pageable, search, userId)
                 .collectList()
                 .flatMap(items ->
                         itemListRedisTemplate.opsForValue()
@@ -115,13 +117,13 @@ public class ItemService {
                 .switchIfEmpty(searchItems);
     }
 
-    private Flux<ItemDto> findAllPaginated(Paging paging, Sorting sorting) {
+    private Flux<ItemDto> findAllPaginatedForUserById(Paging paging, Sorting sorting, Long userId) {
         PageRequest pageable = PageRequest.of(paging.getPageNumber() - 1,
                 paging.getPageSize(),
                 Sort.by(sorting.field));
-        String key = ITEM_LIST_CACHE_KEY + pageable.getPageNumber() + ":" + pageable.getPageSize() + ":" + pageable.getSort();
+        String key = ITEM_LIST_CACHE_KEY + userId + ":" + pageable.getPageNumber() + ":" + pageable.getPageSize() + ":" + pageable.getSort();
 
-        Flux<ItemDto> findItems = itemRepository.findAllDtoSortByOffsetLimit(pageable)
+        Flux<ItemDto> findItems = itemRepository.findAllDtoSortByOffsetLimit(pageable, userId)
                 .collectList()
                 .flatMap(items ->
                         itemListRedisTemplate.opsForValue()

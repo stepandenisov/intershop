@@ -4,6 +4,7 @@ package ru.yandex.intershop.model.order;
 import lombok.*;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.annotation.Transient;
+import org.springframework.data.relational.core.mapping.Column;
 import org.springframework.data.relational.core.mapping.Table;
 
 import java.util.ArrayList;
@@ -20,6 +21,9 @@ public class Order {
     private Long id;
 
     private Double total;
+
+    @Column("user_id")
+    private Long userId;
 
     @Setter
     @With

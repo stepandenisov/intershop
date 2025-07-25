@@ -1,15 +1,18 @@
 package ru.yandex.intershop.controller.cart;
 
 import org.springframework.http.MediaType;
+import org.springframework.security.access.prepost.PostAuthorize;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.server.ServerWebExchange;
 import reactor.core.publisher.Mono;
 import ru.yandex.intershop.model.*;
 
 import ru.yandex.intershop.service.CartService;
 import ru.yandex.intershop.service.OrderService;
 import ru.yandex.intershop.service.PaymentService;
+import ru.yandex.intershop.service.UserService;
 
 import java.util.List;
 import java.util.Objects;
@@ -20,34 +23,48 @@ public class CartController {
 
     private final CartService cartService;
 
+    private final UserService userService;
+
     private final PaymentService paymentService;
     private final OrderService orderService;
 
-    public CartController(CartService cartService, PaymentService paymentService, OrderService orderService) {
+    public CartController(CartService cartService,
+                          PaymentService paymentService,
+                          OrderService orderService,
+                          UserService userService) {
         this.cartService = cartService;
         this.paymentService = paymentService;
         this.orderService = orderService;
+        this.userService = userService;
     }
 
     @PostMapping(value = "/{id}", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public Mono<String> modifyItemCount(@PathVariable(name = "id") Long id,
                                         @RequestParam(name = "redirectUrl") String redirectUrl,
-                                        @RequestPart(name = "action") String action
+                                        @RequestPart(name = "action") String action,
+                                        ServerWebExchange exchange
     ) {
-        return cartService.modifyItemCountByItemId(id, Action.valueOf(action))
-                .then(Mono.just("redirect:" + redirectUrl));
+        return exchange.getPrincipal()
+                .flatMap(principal -> userService.findUserByName(principal.getName()))
+                .flatMap(user -> cartService.modifyItemCountByItemId(user.getId(), id, Action.valueOf(action))
+                        .then(Mono.just("redirect:" + redirectUrl)));
     }
 
     @PostMapping("/buy")
-    public Mono<String> buy() {
-        return cartService.findCartWithCartItemsById(1L)
+    public Mono<String> buy(ServerWebExchange exchange) {
+        return exchange.getPrincipal()
+                .flatMap(principal -> userService.findUserByName(principal.getName()))
+                .flatMap(user -> cartService.findCartWithCartItemsByUserId(user.getId()))
                 .flatMap(orderService::createOrderByCart)
                 .flatMap(order -> Mono.just("redirect:/orders/" + order.getId() + "?newOrder=true"));
     }
 
     @GetMapping(value = {"", "/"})
-    public Mono<String> cart(Model model) {
-        return cartService.findCartWithCartItemsById(1L)
+    @PostAuthorize("")
+    public Mono<String> cart(Model model, ServerWebExchange exchange) {
+        return exchange.getPrincipal()
+                .flatMap(principal -> userService.findUserByName(principal.getName()))
+                .flatMap(user -> cartService.findCartWithCartItemsByUserId(user.getId()))
                 .filter(Objects::nonNull)
                 .flatMap(cart -> {
                     model.addAttribute("items", cart.getCartItems());
@@ -75,4 +92,4 @@ public class CartController {
                 }));
     }
 
-    }
+}

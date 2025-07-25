@@ -41,7 +41,7 @@ public class OrderService {
     public Mono<Order> createOrderByCart(Cart cart){
         return paymentService.buy(cart.getTotal().floatValue())
                 .filter(isSuccess -> isSuccess)
-                .flatMap(isSuccess -> orderRepository.save(new Order(null, cart.getTotal(), new ArrayList<>()))
+                .flatMap(isSuccess -> orderRepository.save(new Order(null, cart.getTotal(), cart.getUserId(), new ArrayList<>()))
                 .flatMap(savedOrder -> {
                     List<OrderItem> orderItems = cart.getCartItems().stream()
                             .map(cartItem -> new OrderItem(null,
@@ -51,7 +51,7 @@ public class OrderService {
                                     cartItem.getItem().getPrice(),
                                     cartItem.getItem())).toList();
                     return orderItemRepository.saveAll(orderItems)
-                            .then(cartService.removeItemsFromCart())
+                            .then(cartService.removeItemsFromCartByUserId(cart.getUserId()))
                             .then(Mono.just(savedOrder));
                 }));
     }
@@ -67,8 +67,8 @@ public class OrderService {
                 );
     }
 
-    public Flux<Order> findAll(){
-        return orderRepository.findAll()
+    public Flux<Order> findAllByUserId(Long userId){
+        return orderRepository.findAllByUserId(userId)
                 .flatMap(orders ->
                         Mono.just(orders)
                                   .zipWith(orderItemRepository.findAllByOrderId(orders.getId()).zipWith(itemService.findAll())
