@@ -46,7 +46,7 @@ public class ItemServiceIntegrationTest extends BaseServiceIntegrationTest {
 
         assertNotNull(savedItem);
 
-        Optional<ItemDto> actualItemDto = itemService.findItemByIdDto(savedItem.getId()).blockOptional();
+        Optional<ItemDto> actualItemDto = itemService.findItemByIdDto(savedItem.getId(), 1L).blockOptional();
 
         assertTrue(actualItemDto.isPresent(), "Изображение должно быть");
         ItemDto cachedItem = itemRedisTemplate.opsForValue().get(ITEM_CACHE_KEY+actualItemDto.get().getId()).block();
@@ -89,7 +89,7 @@ public class ItemServiceIntegrationTest extends BaseServiceIntegrationTest {
 
         Paging paging = new Paging(1, 10, false, false);
 
-        Page<ItemDto> items = itemService.searchPaginatedAndSorted("", paging, Sorting.NO).block();
+        Page<ItemDto> items = itemService.searchPaginatedAndSortedForUserById("", paging, Sorting.NO, 1L).block();
 
         assertNotNull(items, "Элементы должны быть");
 
@@ -98,7 +98,7 @@ public class ItemServiceIntegrationTest extends BaseServiceIntegrationTest {
         PageRequest pageable = PageRequest.of(paging.getPageNumber() - 1,
                 paging.getPageSize(),
                 Sort.by(Sorting.NO.field));
-        String key = ITEM_LIST_CACHE_KEY + pageable.getPageNumber() + ":" + pageable.getPageSize() + ":" + pageable.getSort();
+        String key = ITEM_LIST_CACHE_KEY + 1L + ":" + pageable.getPageNumber() + ":" + pageable.getPageSize() + ":" + pageable.getSort();
         List<ItemDto> cachedItems = itemListRedisTemplate.opsForValue().get(key).block();
         assertNotNull(cachedItems, "Товары должны быть");
         assertEquals(cachedItems.get(0).getId(), itemsList.get(0).getId(), "Id должны совпадать");

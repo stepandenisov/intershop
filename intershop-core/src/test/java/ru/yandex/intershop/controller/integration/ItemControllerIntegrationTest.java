@@ -7,12 +7,15 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.io.ByteArrayResource;
 import org.springframework.http.MediaType;
 import org.springframework.http.client.MultipartBodyBuilder;
+import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.web.reactive.function.BodyInserters;
 import ru.yandex.intershop.model.item.Item;
 import ru.yandex.intershop.repository.ItemRepository;
+import ru.yandex.intershop.service.auth.AuthService;
 
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.springframework.security.test.web.reactive.server.SecurityMockServerConfigurers.csrf;
 
 
 public class ItemControllerIntegrationTest extends BaseControllerIntegrationTest{
@@ -31,6 +34,8 @@ public class ItemControllerIntegrationTest extends BaseControllerIntegrationTest
     }
 
     @Test
+    @WithMockUser(username = "admin",
+            roles = {"ADMIN"})
     void getAddItemPage_shouldReturnAddItemView() {
         webTestClient.get()
                 .uri("/items/add")
@@ -40,6 +45,8 @@ public class ItemControllerIntegrationTest extends BaseControllerIntegrationTest
     }
 
     @Test
+    @WithMockUser(username = "admin",
+            roles = {"ADMIN"})
     void post_shouldReturnHtmlWithItem() {
         var builder = new MultipartBodyBuilder();
         builder.part("title", "Test");
@@ -51,7 +58,9 @@ public class ItemControllerIntegrationTest extends BaseControllerIntegrationTest
                 return "image.png";
             }
         });
-        webTestClient.post()
+        webTestClient
+                .mutateWith(csrf())
+                .post()
                 .uri("/items/")
                 .contentType(MediaType.MULTIPART_FORM_DATA)
                 .body(BodyInserters.fromMultipartData(builder.build()))

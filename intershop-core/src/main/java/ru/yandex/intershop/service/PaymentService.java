@@ -26,13 +26,17 @@ public class PaymentService {
         this.manager = manager;
     }
 
-    public Mono<Boolean> isBalanceEnough(Long userId, float amount) {
+    private Mono<String> getToken(){
         return manager.authorize(OAuth2AuthorizeRequest
                         .withClientRegistrationId("intershop")
                         .principal("system")
                         .build())
                 .map(OAuth2AuthorizedClient::getAccessToken)
-                .map(OAuth2AccessToken::getTokenValue)
+                .map(OAuth2AccessToken::getTokenValue);
+    }
+
+    public Mono<Boolean> isBalanceEnough(Long userId, float amount) {
+        return getToken()
                 .flatMap(token -> paymentApi.balanceGet(userId, token))
                 .flatMap(balanceResponse -> Mono.just(balanceResponse.getBalance() >= amount))
                 .onErrorResume(e -> Mono.empty());
@@ -41,12 +45,7 @@ public class PaymentService {
     public Mono<Boolean> buy(Long userId, float amount) {
         PaymentRequest paymentRequest = new PaymentRequest();
         paymentRequest.setAmount(amount);
-        return manager.authorize(OAuth2AuthorizeRequest
-                        .withClientRegistrationId("intershop")
-                        .principal("system")
-                        .build())
-                .map(OAuth2AuthorizedClient::getAccessToken)
-                .map(OAuth2AccessToken::getTokenValue)
+        return getToken()
                 .flatMap(accessToken -> paymentApi.paymentPost(userId, paymentRequest, accessToken))
                 .flatMap(paymentResponse -> Mono.just(paymentResponse.getSuccess()))
                 .onErrorMap(error -> {

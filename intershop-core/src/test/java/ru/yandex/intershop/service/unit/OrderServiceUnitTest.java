@@ -50,8 +50,8 @@ public class OrderServiceUnitTest {
     @Test
     void save_shouldSaveAndReturnOrder() {
         Item item = new Item(1L, "title", "description", 1.0);
-        Order order = new Order(1L, 1.0, null);
-        Cart cart = new Cart(1L, 1.0, new ArrayList<>());
+        Order order = new Order(1L, 1.0, 1L, null);
+        Cart cart = new Cart(1L, 1.0, 1L, new ArrayList<>());
         List<CartItem> cartItems = List.of(
                 new CartItem(1L, cart.getId(), item.getId(), 1, item)
         );
@@ -61,9 +61,9 @@ public class OrderServiceUnitTest {
         cart.setCartItems(cartItems);
 
         when(orderRepository.save(any(Order.class))).thenReturn(Mono.just(order));
-        when(cartService.removeItemsFromCart()).thenReturn(Mono.empty());
+        when(cartService.removeItemsFromCartByUserId(1L)).thenReturn(Mono.empty());
         when(orderItemRepository.saveAll(anyIterable())).thenReturn(Flux.fromIterable(orderItems));
-        when(paymentService.buy(1.0F)).thenReturn(Mono.just(true));
+        when(paymentService.buy(1L, 1.0F)).thenReturn(Mono.just(true));
         Order savedOrder = orderService.createOrderByCart(cart).block();
 
         assertNotNull(savedOrder, "Заказ должен быть");
@@ -73,7 +73,7 @@ public class OrderServiceUnitTest {
     @Test
     void findOrderById_shouldReturnOrder() {
         Item item = new Item(1L, "title", "description", 1.0);
-        Order order = new Order(1L, 1.0, null);
+        Order order = new Order(1L, 1.0, 1L, null);
         List<OrderItem> orderItems = List.of(
                 new OrderItem(1L, order.getId(), item.getId(), 1, item.getPrice(), item)
         );
@@ -92,17 +92,17 @@ public class OrderServiceUnitTest {
     @Test
     void findAll_shouldReturnOrders() {
         Item item = new Item(1L, "title", "description", 1.0);
-        Order order = new Order(1L, 1.0, null);
+        Order order = new Order(1L, 1.0, 1L, null);
         List<OrderItem> orderItems = List.of(
                 new OrderItem(1L, order.getId(), item.getId(), 1, item.getPrice(), item)
         );
         order.setOrderItems(orderItems);
 
-        when(orderRepository.findAll()).thenReturn(Flux.just(order));
+        when(orderRepository.findAllByUserId(1L)).thenReturn(Flux.just(order));
         when(orderItemRepository.findAllByOrderId(1L)).thenReturn(Flux.fromIterable(orderItems));
         when(itemService.findAll()).thenReturn(Flux.just(item));
 
-        List<Order> orders = orderService.findAll().collectList().block();
+        List<Order> orders = orderService.findAllByUserId(1L).collectList().block();
         assertNotNull(orders);
         assertEquals(1, orders.size(), "Количество заказов должно быть 1");
         assertEquals(1.0, orders.get(0).getTotal(), "Общая сумма должна быть 1.0");

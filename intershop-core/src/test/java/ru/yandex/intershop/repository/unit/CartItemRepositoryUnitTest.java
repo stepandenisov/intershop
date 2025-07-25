@@ -1,6 +1,7 @@
 package ru.yandex.intershop.repository.unit;
 
 import org.junit.jupiter.api.Test;
+import ru.yandex.intershop.model.User;
 import ru.yandex.intershop.model.cart.Cart;
 import ru.yandex.intershop.model.cart.CartItem;
 import ru.yandex.intershop.model.item.Item;
@@ -16,9 +17,10 @@ public class CartItemRepositoryUnitTest extends BaseRepositoryUnitTest{
 
     @Test
     void findAllByCartId_shouldReturnAllByCartId() {
+        User user = userRepository.save(new User(null, "user", "Password", "ROLE_ADMIN")).block();
         Item item = new Item(null, "title", "description", 12.0);
         Item savedItem = itemRepository.save(item).block();
-        Cart cart = new Cart(null, 1.0, new ArrayList<>());
+        Cart cart = new Cart(null, 1.0, user.getId(), new ArrayList<>());
         Cart savedCart = cartRepository.save(cart).block();
         assertNotNull(savedCart);
         assertNotNull(savedItem);
@@ -35,9 +37,10 @@ public class CartItemRepositoryUnitTest extends BaseRepositoryUnitTest{
 
     @Test
     void deleteAllByCartId_shouldDeleteAllByCartId() {
+        User user = userRepository.save(new User(null, "user", "Password", "ROLE_ADMIN")).block();
         Item item = new Item(null, "title", "description", 12.0);
         Item savedItem = itemRepository.save(item).block();
-        Cart cart = new Cart(null, 1.0, new ArrayList<>());
+        Cart cart = new Cart(null, 1.0, user.getId(), new ArrayList<>());
         Cart savedCart = cartRepository.save(cart).block();
         CartItem cartItem = new CartItem(null, cart.getId(), item.getId(), 1, item);
         cartItemRepository.save(cartItem).block();

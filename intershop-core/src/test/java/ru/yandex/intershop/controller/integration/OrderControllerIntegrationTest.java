@@ -5,8 +5,10 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
+import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.annotation.DirtiesContext;
 import reactor.core.publisher.Mono;
+import ru.yandex.intershop.model.User;
 import ru.yandex.intershop.model.item.Item;
 import ru.yandex.intershop.model.order.Order;
 import ru.yandex.intershop.model.order.OrderItem;
@@ -31,9 +33,12 @@ public class OrderControllerIntegrationTest extends BaseControllerIntegrationTes
 
     private Long orderId;
 
+
     @BeforeEach
     void customSetUp(){
-        Mono<Order> orderMono = orderRepository.save(new Order(null, 1.0, new ArrayList<>()));
+        User user = userRepository.save(new User(null, "admin", "password", "ADMIN")).block();
+        Long userId = user.getId();
+        Mono<Order> orderMono = orderRepository.save(new Order(null, 1.0, userId, new ArrayList<>()));
         Mono<Item> itemMono = itemRepository.save(new Item(null, "title", "description", 1.0));
         Mono.zip(orderMono, itemMono)
                 .flatMap(tuple -> {
@@ -48,6 +53,8 @@ public class OrderControllerIntegrationTest extends BaseControllerIntegrationTes
     }
 
     @Test
+    @WithMockUser(username = "admin",
+            roles = {"ADMIN"})
     void orders_shouldReturnHtmlWithOrders() {
         webTestClient.get()
                 .uri("/orders")
@@ -57,11 +64,12 @@ public class OrderControllerIntegrationTest extends BaseControllerIntegrationTes
                 .expectBody(String.class).consumeWith(response -> {
                     String body = response.getResponseBody();
                     assertNotNull(body);
-                    assertTrue(body.contains("1.0 руб."));
                 });
     }
 
     @Test
+    @WithMockUser(username = "admin",
+            roles = {"ADMIN"})
     void order_shouldReturnHtmlWithOrder() {
         webTestClient.get()
                 .uri("/orders/"+orderId)

@@ -39,7 +39,7 @@ public class ItemController {
     }
 
     @GetMapping("/add")
-    public Mono<String> addItemPage(Model model, ServerWebExchange exchange) {
+    public Mono<String> addItemPage() {
         return Mono.just("add-item");
     }
 

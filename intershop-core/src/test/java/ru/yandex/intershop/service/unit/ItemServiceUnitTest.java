@@ -43,14 +43,14 @@ public class ItemServiceUnitTest {
 
 
     @Test
-    void findItemByIdDto_shouldReturnItemDto(){
+    void findItemByIdDto_shouldReturnItemDto() {
         ItemDto itemDto = new ItemDto(1L, "title", "description", 12.0, 1);
-        when(itemRepository.findByIdDto(1L)).thenReturn(Mono.just(itemDto));
-        String key = "item:"+1L;
+        when(itemRepository.findByIdDtoJoinCountOnUserId(1L, 1L)).thenReturn(Mono.just(itemDto));
+        String key = "item:" + 1L + ":" + 1L;
         when(itemRedisTemplate.opsForValue()).thenReturn(itemDtoValueOperations);
         when(itemDtoValueOperations.get(key)).thenReturn(Mono.just(itemDto));
 
-        Optional<ItemDto> actualItemDto = itemService.findItemByIdDto(1L).blockOptional();
+        Optional<ItemDto> actualItemDto = itemService.findItemByIdDto(1L, 1L).blockOptional();
 
         assertTrue(actualItemDto.isPresent(), "Товар должен быть");
         assertEquals("description", actualItemDto.get().getDescription(), "Описание должно быть description");
@@ -59,7 +59,7 @@ public class ItemServiceUnitTest {
 
 
     @Test
-    void findItemById_shouldReturnItem(){
+    void findItemById_shouldReturnItem() {
         Item item = new Item(1L, "title", "description", 12.0);
         when(itemRepository.findById(1L)).thenReturn(Mono.just(item));
 
@@ -70,7 +70,7 @@ public class ItemServiceUnitTest {
     }
 
     @Test
-    void saveItemWithImage_shouldReturnSavedItem(){
+    void saveItemWithImage_shouldReturnSavedItem() {
         Item item = new Item(1L, "title", "description", 12.0);
         Image image = new Image(1L, null, new byte[]{1});
 

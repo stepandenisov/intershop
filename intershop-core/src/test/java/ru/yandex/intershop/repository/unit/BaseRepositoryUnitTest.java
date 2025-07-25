@@ -28,6 +28,9 @@ public abstract class BaseRepositoryUnitTest {
     @Autowired
     OrderItemRepository orderItemRepository;
 
+    @Autowired
+    UserRepository userRepository;
+
 
     @BeforeEach
     public void setUp() {
@@ -37,6 +40,7 @@ public abstract class BaseRepositoryUnitTest {
                 .then(orderRepository.deleteAll())
                 .then(itemRepository.deleteAll())
                 .then(cartRepository.deleteAll())
+                .then(userRepository.deleteAll())
                 .block();
     }
 }

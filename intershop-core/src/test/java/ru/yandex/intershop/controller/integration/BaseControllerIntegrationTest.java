@@ -12,6 +12,7 @@ import org.springframework.test.web.reactive.server.WebTestClient;
 import ru.yandex.intershop.configuration.EmbeddedRedisConfiguration;
 import ru.yandex.intershop.configuration.RedisConfiguration;
 import ru.yandex.intershop.repository.*;
+import ru.yandex.intershop.service.auth.AuthService;
 
 @AutoConfigureWebTestClient
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
@@ -41,6 +42,9 @@ public abstract class BaseControllerIntegrationTest{
     @Autowired
     ImageRepository imageRepository;
 
+    @Autowired
+    UserRepository userRepository;
+
     @BeforeEach
     void setUp() {
         orderItemRepository.deleteAll()
@@ -49,6 +53,7 @@ public abstract class BaseControllerIntegrationTest{
                 .then(orderRepository.deleteAll())
                 .then(cartRepository.deleteAll())
                 .then(itemRepository.deleteAll())
+                .then(userRepository.deleteAll())
                 .block();
     }
 

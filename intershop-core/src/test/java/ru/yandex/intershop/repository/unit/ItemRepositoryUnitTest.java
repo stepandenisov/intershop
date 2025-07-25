@@ -19,7 +19,7 @@ public class ItemRepositoryUnitTest extends BaseRepositoryUnitTest{
 
         assertNotNull(savedItem);
 
-        Optional<ItemDto> actualItemDto = itemRepository.findByIdDto(savedItem.getId()).blockOptional();
+        Optional<ItemDto> actualItemDto = itemRepository.findByIdDtoJoinCountOnUserId(savedItem.getId(), 1L).blockOptional();
 
         assertTrue(actualItemDto.isPresent(), "Изображение должно быть");
         assertEquals("description", actualItemDto.get().getDescription(), "Описание должно быть description");
@@ -32,7 +32,7 @@ public class ItemRepositoryUnitTest extends BaseRepositoryUnitTest{
         itemRepository.save(item).block();
 
         List<ItemDto> items = itemRepository.findAllByTitleStartsWithOrDescriptionStartsWithDtoSortByOffsetLimit(
-                PageRequest.of(0, 10), "title").collectList().block();
+                PageRequest.of(0, 10), "title", 1L).collectList().block();
         assertNotNull(items);
 
         assertEquals(1, items.size(), "Количество товаров должно быть равно 1");
@@ -54,7 +54,7 @@ public class ItemRepositoryUnitTest extends BaseRepositoryUnitTest{
         Item item = new Item(null, "title", "description", 12.0);
         itemRepository.save(item).block();
 
-        List<ItemDto> items = itemRepository.findAllDtoSortByOffsetLimit(PageRequest.of(0, 10)).collectList().block();
+        List<ItemDto> items = itemRepository.findAllDtoSortByOffsetLimit(PageRequest.of(0, 10), 1L).collectList().block();
 
         assertNotNull(items);
         assertEquals(1, items.size(), "Количество товаров должно быть равно 1");

@@ -2,6 +2,7 @@ package ru.yandex.intershop.repository.unit;
 
 
 import org.junit.jupiter.api.Test;
+import ru.yandex.intershop.model.User;
 import ru.yandex.intershop.model.item.Item;
 import ru.yandex.intershop.model.order.Order;
 import ru.yandex.intershop.model.order.OrderItem;
@@ -19,7 +20,9 @@ public class OrderItemRepositoryUnitTest extends BaseRepositoryUnitTest{
     void findAllByOrderId_shouldReturnAllByOrderId(){
         Item item = new Item(null, "title", "description", 12.0);
         Item savedItem = itemRepository.save(item).block();
-        Order order = new Order(null, 1.0, new ArrayList<>());
+        User user = new User(null, "user", "password", "USER");
+        User savedUser = userRepository.save(user).block();
+        Order order = new Order(null, 1.0, savedUser.getId(), new ArrayList<>());
         Order savedOrder = orderRepository.save(order).block();
         OrderItem orderItem = new OrderItem(null, order.getId(), item.getId(), 1, item.getPrice(), item);
         orderItemRepository.save(orderItem).block();

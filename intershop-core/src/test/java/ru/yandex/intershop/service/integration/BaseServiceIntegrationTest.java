@@ -37,6 +37,9 @@ public abstract class BaseServiceIntegrationTest{
     @Autowired
     ImageRepository imageRepository;
 
+    @Autowired
+    UserRepository userRepository;
+
     @MockitoBean
     PaymentService paymentService;
 
@@ -48,6 +51,7 @@ public abstract class BaseServiceIntegrationTest{
                 .then(orderRepository.deleteAll())
                 .then(cartRepository.deleteAll())
                 .then(itemRepository.deleteAll())
+                .then(userRepository.deleteAll())
                 .block();
     }
 
