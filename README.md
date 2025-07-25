@@ -85,13 +85,29 @@
 Кнопка "Корзина" предназначена для перехода на страницу с корзиной. 
 </p>
 <h1>Запуск</h1>
-<p>Собрать проект командой <b>mvn package</b></p>
-<p>Запустить его модули (в Unix-системе):
-<li>командой <b>./intershop-core-0.0.1-SNAPSHOT.jar</b> из папки <i>/intershop-core/target</i>.</li>
-<li>командой <b>./payment-0.0.1-SNAPSHOT.jar</b> из папки <i>/payment/target</i>.</li>
-<p>Должен быть запущен Redis-server на 6379 порту.</p>
-<h1>Запуск в контейнере Docker</h1>
-<p>Собрать докер-контейнер <b>docker compose build</b> в папке проекта. Запустить собранный образ командой <b>docker compose up</b>.</p>
+<p>Запустить KEYCLOAK командой <b>docker run -d -p 8082:8080 --name keycloak -e KC_BOOTSTRAP_ADMIN_USERNAME=admin -e KC_BOOTSTRAP_ADMIN_PASSWORD=admin quay.io/keycloak/keycloak:26.1.3 start-dev</b></p>
+<p>Настроить клиента:</p>
+<li>Перейти по ссылке http://localhost:8082</li>
+<li>Авторизоваться в сервисе - admin/admin</li>
+<li>Создать нового клиента со следующими параметрами:</li>
+<img src="img.png">
+<img src="img_1.png">
+<img src="img_2.png">
+<li>Скопировать Client Secret</li>
+<img src="img_3.png">
+<li>Скопированный секрет передать в качестве параметра client-secret в файле application.properties основного модуля intershop-core:</li>
+<img src="img_4.png">
+<i>при запуске сборки порт 6379 должен быть свободен для тестов</i>
+<p>Собрать проект командой <b>mvn package</b> из основной папки /intershop</p>
+<p>Запустить его модули: </p>
+<li>в Unix-системе <b>sh run.sh</b></li>
+<li>в Windows-системе <b>./run.cmd</b></li>
+<p>Запустить Redis-server на 6379 порту.</p>
+
+<h3>ПОЛЬЗОВАТЕЛИ СИСТЕМЫ:</h3>
+<li>admin (admin/password) - имеет доступ к эндпоинту /items/add для добавления товаров.</li>
+<li>user (user/password) - может добавлять в корзину товары и оформлять заказ.</li>
+<li>анонимный пользователь - может просматривать товары, но не покупать их.</li>
 
 
 

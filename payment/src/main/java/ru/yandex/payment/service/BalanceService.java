@@ -17,7 +17,7 @@ public class BalanceService {
         float min = 100.0F;
         float max = 1000.0F;
         balances.put(1L, min + random.nextFloat() * (max - min));
-        balances.put(2L, 0.0F);
+        balances.put(2L, min + random.nextFloat() * (max - min));
     }
 
     public double getBalance(Long id){
