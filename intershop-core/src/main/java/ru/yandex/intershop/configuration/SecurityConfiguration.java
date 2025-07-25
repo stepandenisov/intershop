@@ -11,11 +11,15 @@ import org.springframework.security.config.web.server.ServerHttpSecurity;
 import org.springframework.security.core.userdetails.ReactiveUserDetailsService;
 import org.springframework.security.crypto.factory.PasswordEncoderFactories;
 import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.security.oauth2.client.oidc.web.server.logout.OidcClientInitiatedServerLogoutSuccessHandler;
+import org.springframework.security.oauth2.client.registration.InMemoryReactiveClientRegistrationRepository;
+import org.springframework.security.oauth2.client.registration.ReactiveClientRegistrationRepository;
 import org.springframework.security.web.server.SecurityWebFilterChain;
 import org.springframework.security.web.server.authentication.AuthenticationWebFilter;
 import org.springframework.security.web.server.authentication.ServerHttpBasicAuthenticationConverter;
 import org.springframework.security.web.server.authentication.logout.RedirectServerLogoutSuccessHandler;
 import org.springframework.security.web.server.authentication.logout.SecurityContextServerLogoutHandler;
+import org.springframework.security.web.server.authentication.logout.ServerLogoutSuccessHandler;
 import org.springframework.security.web.server.context.ServerSecurityContextRepository;
 import org.springframework.security.web.server.context.WebSessionServerSecurityContextRepository;
 import org.springframework.security.web.server.csrf.WebSessionServerCsrfTokenRepository;
@@ -24,6 +28,8 @@ import ru.yandex.intershop.repository.UserRepository;
 import ru.yandex.intershop.service.auth.H2ReactiveUserDetailsService;
 
 import java.net.URI;
+
+import static org.springframework.security.config.Customizer.withDefaults;
 
 @Configuration
 @EnableWebFluxSecurity
@@ -53,7 +59,8 @@ public class SecurityConfiguration {
 
     @Bean
     public SecurityWebFilterChain securityWebFilterChain(ServerHttpSecurity http,
-                                                         ReactiveAuthenticationManager authenticationManager) {
+                                                         ReactiveAuthenticationManager authenticationManager,
+                                                         ReactiveClientRegistrationRepository clientRegistrationRepository) {
         AuthenticationWebFilter authFilter = new AuthenticationWebFilter(authenticationManager);
         authFilter.setServerAuthenticationConverter(new ServerHttpBasicAuthenticationConverter());
 
@@ -66,6 +73,10 @@ public class SecurityConfiguration {
         RedirectServerLogoutSuccessHandler logoutSuccessHandler = new RedirectServerLogoutSuccessHandler();
         logoutSuccessHandler.setLogoutSuccessUrl(URI.create("/items"));
 
+        OidcClientInitiatedServerLogoutSuccessHandler oidLogoutHandler =
+                new OidcClientInitiatedServerLogoutSuccessHandler(clientRegistrationRepository);
+        oidLogoutHandler.setPostLogoutRedirectUri("{baseUrl}");
+
         return http
                 .addFilterAt(authFilter, SecurityWebFiltersOrder.AUTHENTICATION)
                 .formLogin(form -> form
@@ -74,7 +85,8 @@ public class SecurityConfiguration {
                 .logout(logout ->
                         logout.logoutUrl("/logout")
                                 .logoutHandler(new SecurityContextServerLogoutHandler())
-                                .logoutSuccessHandler(logoutSuccessHandler))
+                                .logoutSuccessHandler(logoutSuccessHandler)
+                                .logoutSuccessHandler(oidLogoutHandler))
                 .authorizeExchange(exchanges -> exchanges
                         .pathMatchers(HttpMethod.POST, "/items").hasRole("ADMIN")
                         .pathMatchers("/items/add").hasRole("ADMIN")
@@ -86,6 +98,8 @@ public class SecurityConfiguration {
                         .csrfTokenRequestHandler(csrfHandler)
                         .csrfTokenRepository(webSessionServerCsrfTokenRepository())
                 )
+                .oauth2Login(withDefaults())
+                .oauth2Client(withDefaults())
                 .build();
     }
 

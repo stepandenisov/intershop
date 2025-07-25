@@ -7,6 +7,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.server.ServerWebExchange;
 import reactor.core.publisher.Mono;
@@ -26,6 +27,7 @@ public class BalanceApiController implements BalanceApi {
 
     @Override
     public Mono<ResponseEntity<BalanceResponse>> balanceGet(
+            @PathVariable("id") Long id,
             @Parameter(hidden = true) final ServerWebExchange exchange
     ) {
         Mono<Void> result;
@@ -33,7 +35,7 @@ public class BalanceApiController implements BalanceApi {
         for (MediaType mediaType : exchange.getRequest().getHeaders().getAccept()) {
             if (mediaType.isCompatibleWith(MediaType.valueOf("application/json"))) {
                 exchange.getResponse().setStatusCode(HttpStatus.OK);
-                String exampleString = "{ \"balance\" : " + balanceService.getBalance() + " }";
+                String exampleString = "{ \"balance\" : " + balanceService.getBalance(id) + " }";
                 result = ApiUtil.getExampleResponse(exchange, MediaType.valueOf("application/json"), exampleString);
                 return result.then(Mono.empty());
             }

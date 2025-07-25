@@ -16,6 +16,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.server.ServerWebExchange;
@@ -33,29 +34,30 @@ public interface BalanceApi {
      * Возвращает текущий баланс пользователя. Используется для определения доступности оформления заказа.
      *
      * @return Баланс успешно получен (status code 200)
-     *         or Сервис недоступен (status code 503)
+     * or Сервис недоступен (status code 503)
      */
     @Operation(
-        operationId = "balanceGet",
-        summary = "Получение баланса на счёте",
-        description = "Возвращает текущий баланс пользователя. Используется для определения доступности оформления заказа.",
-        responses = {
-            @ApiResponse(responseCode = "200", description = "Баланс успешно получен", content = {
-                @Content(mediaType = "application/json", schema = @Schema(implementation = BalanceResponse.class))
-            }),
-            @ApiResponse(responseCode = "503", description = "Сервис недоступен", content = {
-                @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorResponse.class))
-            })
-        }
+            operationId = "balanceGet",
+            summary = "Получение баланса на счёте",
+            description = "Возвращает текущий баланс пользователя. Используется для определения доступности оформления заказа.",
+            responses = {
+                    @ApiResponse(responseCode = "200", description = "Баланс успешно получен", content = {
+                            @Content(mediaType = "application/json", schema = @Schema(implementation = BalanceResponse.class))
+                    }),
+                    @ApiResponse(responseCode = "503", description = "Сервис недоступен", content = {
+                            @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorResponse.class))
+                    })
+            }
     )
     @RequestMapping(
-        method = RequestMethod.GET,
-        value = "/balance",
-        produces = { "application/json" }
+            method = RequestMethod.GET,
+            value = "/balance/{id}",
+            produces = {"application/json"}
     )
-    
+
     default Mono<ResponseEntity<BalanceResponse>> balanceGet(
-        @Parameter(hidden = true) final ServerWebExchange exchange
+            @PathVariable("id") Long id,
+            @Parameter(hidden = true) final ServerWebExchange exchange
     ) {
         Mono<Void> result = Mono.empty();
         exchange.getResponse().setStatusCode(HttpStatus.NOT_IMPLEMENTED);

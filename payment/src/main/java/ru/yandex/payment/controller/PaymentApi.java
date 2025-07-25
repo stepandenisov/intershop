@@ -17,6 +17,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
@@ -35,37 +36,38 @@ public interface PaymentApi {
      * POST /payment : Проведение платежа
      * Осуществляет вычитание суммы заказа из баланса. Возвращает результат платежа.
      *
-     * @param paymentRequest  (required)
+     * @param paymentRequest (required)
      * @return Платёж успешно выполнен (status code 200)
-     *         or Недостаточно средств для оплаты (status code 400)
-     *         or Сервис недоступен (status code 503)
+     * or Недостаточно средств для оплаты (status code 400)
+     * or Сервис недоступен (status code 503)
      */
     @Operation(
-        operationId = "paymentPost",
-        summary = "Проведение платежа",
-        description = "Осуществляет вычитание суммы заказа из баланса. Возвращает результат платежа.",
-        responses = {
-            @ApiResponse(responseCode = "200", description = "Платёж успешно выполнен", content = {
-                @Content(mediaType = "application/json", schema = @Schema(implementation = PaymentResponse.class))
-            }),
-            @ApiResponse(responseCode = "400", description = "Недостаточно средств для оплаты", content = {
-                @Content(mediaType = "application/json", schema = @Schema(implementation = PaymentResponse.class))
-            }),
-            @ApiResponse(responseCode = "503", description = "Сервис недоступен", content = {
-                @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorResponse.class))
-            })
-        }
+            operationId = "paymentPost",
+            summary = "Проведение платежа",
+            description = "Осуществляет вычитание суммы заказа из баланса. Возвращает результат платежа.",
+            responses = {
+                    @ApiResponse(responseCode = "200", description = "Платёж успешно выполнен", content = {
+                            @Content(mediaType = "application/json", schema = @Schema(implementation = PaymentResponse.class))
+                    }),
+                    @ApiResponse(responseCode = "400", description = "Недостаточно средств для оплаты", content = {
+                            @Content(mediaType = "application/json", schema = @Schema(implementation = PaymentResponse.class))
+                    }),
+                    @ApiResponse(responseCode = "503", description = "Сервис недоступен", content = {
+                            @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorResponse.class))
+                    })
+            }
     )
     @RequestMapping(
-        method = RequestMethod.POST,
-        value = "/payment",
-        produces = { "application/json" },
-        consumes = { "application/json" }
+            method = RequestMethod.POST,
+            value = "/payment/{id}",
+            produces = {"application/json"},
+            consumes = {"application/json"}
     )
-    
+
     default Mono<ResponseEntity<PaymentResponse>> paymentPost(
-        @Parameter(name = "PaymentRequest", description = "", required = true) @Valid @RequestBody Mono<PaymentRequest> paymentRequest,
-        @Parameter(hidden = true) final ServerWebExchange exchange
+            @PathVariable("id") Long id,
+            @Parameter(name = "PaymentRequest", description = "", required = true) @Valid @RequestBody Mono<PaymentRequest> paymentRequest,
+            @Parameter(hidden = true) final ServerWebExchange exchange
     ) {
         Mono<Void> result = Mono.empty();
         exchange.getResponse().setStatusCode(HttpStatus.NOT_IMPLEMENTED);

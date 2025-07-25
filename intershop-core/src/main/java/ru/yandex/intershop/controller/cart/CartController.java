@@ -70,7 +70,7 @@ public class CartController {
                     model.addAttribute("items", cart.getCartItems());
                     model.addAttribute("total", cart.getTotal());
                     model.addAttribute("empty", cart.getCartItems().isEmpty());
-                    return paymentService.isBalanceEnough(cart.getTotal().floatValue())
+                    return paymentService.isBalanceEnough(cart.getUserId(), cart.getTotal().floatValue())
                             .flatMap(isEnough -> {
                                 model.addAttribute("isEnough", isEnough);
                                 model.addAttribute("isUnavailable", false);

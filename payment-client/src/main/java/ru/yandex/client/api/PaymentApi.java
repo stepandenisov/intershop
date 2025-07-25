@@ -37,36 +37,39 @@ public class PaymentApi {
         this.apiClient = apiClient;
     }
 
-    
+
     /**
      * Получение баланса на счёте
      * Возвращает текущий баланс пользователя. Используется для определения доступности оформления заказа.
      * <p><b>200</b> - Баланс успешно получен
      * <p><b>503</b> - Сервис недоступен
+     *
      * @return BalanceResponse
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    private ResponseSpec balanceGetRequestCreation() throws WebClientResponseException {
+    private ResponseSpec balanceGetRequestCreation(Long id, String accessToken) throws WebClientResponseException {
         Object postBody = null;
         // create path and map variables
         final Map<String, Object> pathParams = new HashMap<String, Object>();
 
         final MultiValueMap<String, String> queryParams = new LinkedMultiValueMap<String, String>();
         final HttpHeaders headerParams = new HttpHeaders();
+        headerParams.add(HttpHeaders.AUTHORIZATION, "Bearer " + accessToken);
         final MultiValueMap<String, String> cookieParams = new LinkedMultiValueMap<String, String>();
         final MultiValueMap<String, Object> formParams = new LinkedMultiValueMap<String, Object>();
 
-        final String[] localVarAccepts = { 
-            "application/json"
+        final String[] localVarAccepts = {
+                "application/json"
         };
         final List<MediaType> localVarAccept = apiClient.selectHeaderAccept(localVarAccepts);
-        final String[] localVarContentTypes = { };
+        final String[] localVarContentTypes = {};
         final MediaType localVarContentType = apiClient.selectHeaderContentType(localVarContentTypes);
 
-        String[] localVarAuthNames = new String[] {  };
+        String[] localVarAuthNames = new String[]{};
 
-        ParameterizedTypeReference<BalanceResponse> localVarReturnType = new ParameterizedTypeReference<BalanceResponse>() {};
-        return apiClient.invokeAPI("/balance", HttpMethod.GET, pathParams, queryParams, postBody, headerParams, cookieParams, formParams, localVarAccept, localVarContentType, localVarAuthNames, localVarReturnType);
+        ParameterizedTypeReference<BalanceResponse> localVarReturnType = new ParameterizedTypeReference<BalanceResponse>() {
+        };
+        return apiClient.invokeAPI("/balance/" + id, HttpMethod.GET, pathParams, queryParams, postBody, headerParams, cookieParams, formParams, localVarAccept, localVarContentType, localVarAuthNames, localVarReturnType);
     }
 
     /**
@@ -74,12 +77,14 @@ public class PaymentApi {
      * Возвращает текущий баланс пользователя. Используется для определения доступности оформления заказа.
      * <p><b>200</b> - Баланс успешно получен
      * <p><b>503</b> - Сервис недоступен
+     *
      * @return BalanceResponse
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public Mono<BalanceResponse> balanceGet() throws WebClientResponseException {
-        ParameterizedTypeReference<BalanceResponse> localVarReturnType = new ParameterizedTypeReference<BalanceResponse>() {};
-        return balanceGetRequestCreation().bodyToMono(localVarReturnType);
+    public Mono<BalanceResponse> balanceGet(Long id, String accessToken) throws WebClientResponseException {
+        ParameterizedTypeReference<BalanceResponse> localVarReturnType = new ParameterizedTypeReference<BalanceResponse>() {
+        };
+        return balanceGetRequestCreation(id, accessToken).bodyToMono(localVarReturnType);
     }
 
 
@@ -89,11 +94,12 @@ public class PaymentApi {
      * <p><b>200</b> - Платёж успешно выполнен
      * <p><b>400</b> - Недостаточно средств для оплаты
      * <p><b>503</b> - Сервис недоступен
+     *
      * @param paymentRequest The paymentRequest parameter
      * @return PaymentResponse
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    private ResponseSpec paymentPostRequestCreation(PaymentRequest paymentRequest) throws WebClientResponseException {
+    private ResponseSpec paymentPostRequestCreation(Long id, PaymentRequest paymentRequest, String accessToken) throws WebClientResponseException {
         Object postBody = paymentRequest;
         // verify the required parameter 'paymentRequest' is set
         if (paymentRequest == null) {
@@ -104,22 +110,24 @@ public class PaymentApi {
 
         final MultiValueMap<String, String> queryParams = new LinkedMultiValueMap<String, String>();
         final HttpHeaders headerParams = new HttpHeaders();
+        headerParams.add(HttpHeaders.AUTHORIZATION, "Bearer " + accessToken);
         final MultiValueMap<String, String> cookieParams = new LinkedMultiValueMap<String, String>();
         final MultiValueMap<String, Object> formParams = new LinkedMultiValueMap<String, Object>();
 
-        final String[] localVarAccepts = { 
-            "application/json"
+        final String[] localVarAccepts = {
+                "application/json"
         };
         final List<MediaType> localVarAccept = apiClient.selectHeaderAccept(localVarAccepts);
-        final String[] localVarContentTypes = { 
-            "application/json"
+        final String[] localVarContentTypes = {
+                "application/json"
         };
         final MediaType localVarContentType = apiClient.selectHeaderContentType(localVarContentTypes);
 
-        String[] localVarAuthNames = new String[] {  };
+        String[] localVarAuthNames = new String[]{};
 
-        ParameterizedTypeReference<PaymentResponse> localVarReturnType = new ParameterizedTypeReference<PaymentResponse>() {};
-        return apiClient.invokeAPI("/payment", HttpMethod.POST, pathParams, queryParams, postBody, headerParams, cookieParams, formParams, localVarAccept, localVarContentType, localVarAuthNames, localVarReturnType);
+        ParameterizedTypeReference<PaymentResponse> localVarReturnType = new ParameterizedTypeReference<PaymentResponse>() {
+        };
+        return apiClient.invokeAPI("/payment/"+id, HttpMethod.POST, pathParams, queryParams, postBody, headerParams, cookieParams, formParams, localVarAccept, localVarContentType, localVarAuthNames, localVarReturnType);
     }
 
     /**
@@ -128,12 +136,14 @@ public class PaymentApi {
      * <p><b>200</b> - Платёж успешно выполнен
      * <p><b>400</b> - Недостаточно средств для оплаты
      * <p><b>503</b> - Сервис недоступен
+     *
      * @param paymentRequest The paymentRequest parameter
      * @return PaymentResponse
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public Mono<PaymentResponse> paymentPost(PaymentRequest paymentRequest) throws WebClientResponseException {
-        ParameterizedTypeReference<PaymentResponse> localVarReturnType = new ParameterizedTypeReference<PaymentResponse>() {};
-        return paymentPostRequestCreation(paymentRequest).bodyToMono(localVarReturnType);
+    public Mono<PaymentResponse> paymentPost(Long id, PaymentRequest paymentRequest, String accessToken) throws WebClientResponseException {
+        ParameterizedTypeReference<PaymentResponse> localVarReturnType = new ParameterizedTypeReference<PaymentResponse>() {
+        };
+        return paymentPostRequestCreation(id, paymentRequest, accessToken).bodyToMono(localVarReturnType);
     }
 }

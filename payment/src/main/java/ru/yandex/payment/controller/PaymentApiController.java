@@ -8,6 +8,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.server.ServerWebExchange;
@@ -29,6 +30,7 @@ public class PaymentApiController implements PaymentApi {
 
     @Override
     public Mono<ResponseEntity<PaymentResponse>> paymentPost(
+            @PathVariable("id") Long id,
             @Parameter(name = "PaymentRequest", required = true) @Valid @RequestBody Mono<PaymentRequest> paymentRequest,
             @Parameter(hidden = true) final ServerWebExchange exchange
     ) {
@@ -38,14 +40,14 @@ public class PaymentApiController implements PaymentApi {
             if (mediaType.isCompatibleWith(MediaType.valueOf("application/json"))) {
                 result = paymentRequest.flatMap(pR -> {
                     float amount = pR.getAmount();
-                    if (amount <= balanceService.getBalance()) {
-                        balanceService.changeBalance(amount);
+                    if (amount <= balanceService.getBalance(id)) {
+                        balanceService.changeBalance(id, amount);
                         exchange.getResponse().setStatusCode(HttpStatus.OK);
-                        String exampleString = "{ \"success\" : true, \"remainingBalance\" : " + balanceService.getBalance() + " }";
+                        String exampleString = "{ \"success\" : true, \"remainingBalance\" : " + balanceService.getBalance(id) + " }";
                         return ApiUtil.getExampleResponse(exchange, MediaType.valueOf("application/json"), exampleString);
                     }
                     exchange.getResponse().setStatusCode(HttpStatus.BAD_REQUEST);
-                    String exampleString = "{ \"success\" : false, \"remainingBalance\" : " + balanceService.getBalance() + ", \"error\" : \"Недостаточно средств для оплаты\" }";
+                    String exampleString = "{ \"success\" : false, \"remainingBalance\" : " + balanceService.getBalance(id) + ", \"error\" : \"Недостаточно средств для оплаты\" }";
                     return ApiUtil.getExampleResponse(exchange, MediaType.valueOf("application/json"), exampleString);
                 });
                 return result.then(Mono.empty());
